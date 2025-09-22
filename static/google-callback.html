@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Authenticating with Google...</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #eef5ff; }
+        p { font-size: 1.2rem; color: #555; }
+    </style>
+</head>
+<body>
+    <p id="message">Processing your login, please wait...</p>
+    <script>
+        window.onload = async function() {
+            const messageDiv = document.getElementById('message');
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code'); // Get the authorization code from Google
+
+            if (code) {
+                try {
+                    // Send the code to our backend to be exchanged for a token
+                    const response = await fetch('http://127.0.0.1:8000/auth/google/exchange', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: code })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Success! Save our app's token and go to the main dashboard
+                        localStorage.setItem('weatherAppToken', data.access_token);
+                        window.location.href = './index.html';
+                    } else {
+                        messageDiv.textContent = 'Error: ' + (data.detail || 'Could not log in.');
+                    }
+                } catch (error) {
+                    messageDiv.textContent = 'Error: Could not connect to the server.';
+                }
+            } else {
+                messageDiv.textContent = 'Error: No authorization code provided by Google.';
+            }
+        };
+    </script>
+</body>
+</html>

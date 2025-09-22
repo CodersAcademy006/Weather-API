@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+
+    <script>
+        // This runs before anything else on the page
+        const token = localStorage.getItem('weatherAppToken');
+        if (!token) {
+            // If no token is found, the user is not logged in.
+            // Redirect them to the login page immediately.
+            window.location.href = './login.html';
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #70c1ff; background-image: linear-gradient(to top, #70c1ff 0%, #b3e5fc 100%); transition: background-image 1s ease-in-out; }
+        @keyframes slow-pan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .bg-sunny { background-image: linear-gradient(to top, #ffcc33 0%, #ffb347 100%); background-size: 200% 200%; animation: slow-pan 20s ease infinite; }
+        .bg-cloudy { background-image: linear-gradient(to top, #bdc3c7 0%, #a7b5c1 100%); background-size: 200% 200%; animation: slow-pan 30s ease infinite; }
+        .bg-rainy { background-image: linear-gradient(to top, #6a737c 0%, #4a545e 100%); background-size: 200% 200%; animation: slow-pan 40s ease infinite; }
+        .bg-snowy { background-image: linear-gradient(to top, #e6e9f0 0%, #eef1f5 100%); background-size: 200% 200%; animation: slow-pan 35s ease infinite; }
+        .dashboard { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); padding: 2rem; border-radius: 20px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12); width: 90%; max-width: 800px; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .header { text-align: center; margin-bottom: 2rem; position: relative; }
+        .header h1 { margin: 0; color: #333; }
+        .header p { color: #555; }
+        #logoutBtn { position: absolute; top: 0; right: 0; background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        nav { display: flex; justify-content: center; border-bottom: 1px solid #ddd; margin-bottom: 2rem; }
+        nav button { background: none; border: none; padding: 1rem; font-size: 1rem; cursor: pointer; color: #888; border-bottom: 3px solid transparent; }
+        nav button.active { color: #007bff; border-bottom-color: #007bff; font-weight: bold; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; text-align: center; }
+        .detail-item { background: rgba(248, 249, 250, 0.7); padding: 1.5rem; border-radius: 10px; }
+        .detail-item h3 { margin: 0 0 0.5rem 0; font-size: 1rem; color: #555; }
+        .detail-item p { margin: 0; font-size: 1.8rem; font-weight: bold; color: #333; }
+        .daily-forecast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; }
+        .forecast-day { background-color: rgba(248, 249, 250, 0.7); border-radius: 10px; padding: 1rem; text-align: center; }
+        .forecast-day .date { font-weight: bold; color: #555; }
+        .forecast-day .icon { font-size: 2.5rem; }
+        .forecast-day .temps { font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1 id="location-name">Your Weather Dashboard</h1>
+            <p id="current-time">Please allow location access to get started</p>
+            <button id="logoutBtn">Log Out</button>
+        </div>
+        <nav>
+            <button class="tab-button active" data-tab="now">Now</button>
+            <button class="tab-button" data-tab="hourly">Hourly</button>
+            <button class="tab-button" data-tab="daily">Daily</button>
+        </nav>
+        
+        <div id="now" class="tab-content active">
+            <div class="details-grid">
+                <div class="detail-item"><h3>Temperature</h3><p id="temp">-- °C</p></div>
+                <div class="detail-item"><h3>Feels Like</h3><p id="feels-like">-- °C</p></div>
+                <div class="detail-item"><h3>Humidity</h3><p id="humidity">-- %</p></div>
+                <div class="detail-item"><h3>Wind Speed</h3><p id="wind">-- m/s</p></div>
+                <div class="detail-item"><h3>Precipitation</h3><p id="precip">-- mm</p></div>
+                <div class="detail-item"><h3>UV Index</h3><p id="uv-index">--</p></div>
+            </div>
+        </div>
+        <div id="hourly" class="tab-content"><canvas id="hourly-chart"></canvas></div>
+        <div id="daily" class="tab-content"><div class="daily-forecast-grid" id="daily-forecast-container"></div></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:8000";
+        let hourlyChart = null;
+
+        // --- Tab Navigation Logic ---
+        const tabs = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(item => item.classList.remove('active'));
+                tab.classList.add('active');
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // --- Logout Logic ---
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('weatherAppToken');
+            window.location.href = './login.html';
+        });
+
+        // --- Main Data Fetching Logic on Page Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const { latitude, longitude } = position.coords;
+                    fetchAllWeatherData(latitude, longitude);
+                }, () => {
+                    alert('Please allow location access to use the weather dashboard.');
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        });
+
+        async function fetchAllWeatherData(lat, lon) {
+            document.getElementById('location-name').textContent = "Fetching Weather...";
+            
+            // NEW: Get the token and create the authorization header
+            const token = localStorage.getItem('weatherAppToken');
+            const headers = {
+                'Authorization': `Bearer ${token}`
+            };
+
+            try {
+                // NEW: All fetch calls now include the authorization header
+                const [weatherRes, hourlyRes, dailyRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/weather?lat=${lat}&lon=${lon}`, { headers }),
+                    fetch(`${API_BASE_URL}/hourly?lat=${lat}&lon=${lon}`, { headers }),
+                    fetch(`${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}`, { headers })
+                ]);
+
+                // If token is invalid or expired, the server will send a 401 error
+                if (weatherRes.status === 401) {
+                    localStorage.removeItem('weatherAppToken');
+                    window.location.href = './login.html';
+                    return;
+                }
+                
+                if (!weatherRes.ok || !hourlyRes.ok || !dailyRes.ok) throw new Error('API request failed');
+                
+                const weatherData = await weatherRes.json();
+                const hourlyData = await hourlyRes.json();
+                const dailyData = await dailyRes.json();
+
+                updateCurrentWeatherUI(weatherData);
+                renderHourlyChart(hourlyData);
+                updateDailyForecastUI(dailyData);
+                updateBackground(weatherData.weather_code);
+
+                document.getElementById('location-name').textContent = `Weather for Your Location`;
+            } catch (error) {
+                console.error("Failed to fetch all weather data:", error);
+                document.getElementById('location-name').textContent = "Failed to load data";
+            }
+        }
+
+        // --- UI Update Functions (These are unchanged) ---
+        function updateCurrentWeatherUI(data) { /* ... same as before ... */ }
+        function renderHourlyChart(data) { /* ... same as before ... */ }
+        function updateDailyForecastUI(data) { /* ... same as before ... */ }
+        function updateBackground(code) { /* ... same as before ... */ }
+        function getWeatherIcon(code) { /* ... same as before ... */ }
+        function getWeatherCondition(code) { /* ... same as before ... */ }
+
+        // --- Full definitions for UI functions ---
+        function updateCurrentWeatherUI(data) {
+            document.getElementById('current-time').textContent = `Updated: ${new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+            document.getElementById('temp').textContent = `${Math.round(data.temperature_c)} °C`;
+            document.getElementById('feels-like').textContent = `${Math.round(data.apparent_temperature)} °C`;
+            document.getElementById('humidity').textContent = `${data.humidity_pct} %`;
+            document.getElementById('wind').textContent = `${data.wind_speed_mps} m/s`;
+            document.getElementById('precip').textContent = `${data.precip_mm} mm`;
+            document.getElementById('uv-index').textContent = data.uv_index;
+        }
+        function renderHourlyChart(data) {
+            const ctx = document.getElementById('hourly-chart').getContext('2d');
+            const labels = data.map(d => new Date(d.time).getHours() + ':00');
+            const temps = data.map(d => d.temp);
+            if (hourlyChart) { hourlyChart.destroy(); }
+            hourlyChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Temperature (°C)', data: temps, borderColor: '#007bff', backgroundColor: 'rgba(0, 123, 255, 0.1)', fill: true, tension: 0.4, borderWidth: 3 }] }, options: { scales: { y: { beginAtZero: false, grid: { display: false } } }, plugins: { legend: { display: false } } } });
+        }
+        function updateDailyForecastUI(data) {
+            const container = document.getElementById('daily-forecast-container');
+            container.innerHTML = '';
+            data.forEach(day => {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'forecast-day';
+                const date = new Date(day.date);
+                dayEl.innerHTML = ` <div class="date">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div> <div class="icon">${getWeatherIcon(day.weather_code)}</div> <div class="temps"><strong>${Math.round(day.max_temp)}°</strong> / ${Math.round(day.min_temp)}°</div> `;
+                container.appendChild(dayEl);
+            });
+        }
+        function updateBackground(code) { document.body.className = ''; document.body.classList.add(getWeatherCondition(code)); }
+        function getWeatherCondition(code) { if (code <= 1) return 'bg-sunny'; if (code <= 3) return 'bg-cloudy'; if (code <= 67) return 'bg-rainy'; if (code <= 77) return 'bg-snowy'; if (code <= 99) return 'bg-rainy'; return 'bg-cloudy'; }
+        function getWeatherIcon(code) { const condition = getWeatherCondition(code); if (condition === 'bg-sunny') return '☀️'; if (condition === 'bg-cloudy') return '☁️'; if (condition === 'bg-rainy') return '🌧️'; if (condition === 'bg-snowy') return '❄️'; return '🌍'; }
+    </script>
+</body>
+</html>
