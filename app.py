@@ -8,6 +8,16 @@ A modern, feature-rich weather API built with FastAPI featuring:
 - Session-based authentication
 - Rate limiting
 - Health checks and metrics
+
+Phase 2 Features:
+- Hourly, daily, and historical weather endpoints
+- Geocoding and reverse geocoding
+- Weather alerts
+- PDF/Excel report downloads
+- ML-based temperature predictions
+- Multi-language support
+- API key management
+- Admin dashboard
 """
 
 import requests
@@ -28,6 +38,16 @@ from session_middleware import SessionMiddleware, set_session_middleware, option
 from middleware.rate_limiter import RateLimiterMiddleware
 from routes.auth import router as auth_router
 from metrics import router as metrics_router, get_metrics
+
+# Phase 2 routers
+from routes.weather_v2 import router as weather_v2_router
+from routes.geocode import router as geocode_router
+from routes.alerts import router as alerts_router
+from routes.downloads import router as downloads_router
+from routes.apikeys import router as apikeys_router
+from routes.predict import router as predict_router
+from routes.admin import router as admin_router
+from routes.i18n import router as i18n_router
 
 # Initialize logging
 logger = get_logger(__name__)
@@ -74,8 +94,48 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Production-grade weather API with caching, authentication, and rate limiting",
-    lifespan=lifespan
+    description="""
+# IntelliWeather API
+
+Production-grade weather API with caching, authentication, and rate limiting.
+
+## Features
+
+### Phase 1
+- Real-time weather data
+- In-memory caching
+- Session-based authentication
+- Rate limiting
+- Health & metrics
+
+### Phase 2
+- **Weather V2**: Hourly, daily, and historical endpoints with CSV export
+- **Geocoding**: Location search and reverse geocoding
+- **Alerts**: Weather alerts and warnings
+- **Downloads**: PDF and Excel weather reports
+- **ML Prediction**: Next-day temperature prediction
+- **i18n**: Multi-language support (EN, HI, UR, AR, ES)
+- **API Keys**: Per-key rate limiting
+- **Admin Dashboard**: Analytics and monitoring
+
+## Authentication
+
+Use session cookies or API keys for authentication.
+""",
+    lifespan=lifespan,
+    openapi_tags=[
+        {"name": "Weather", "description": "Current weather and basic forecasts"},
+        {"name": "Weather V2", "description": "Enhanced weather endpoints with CSV support"},
+        {"name": "Geocoding", "description": "Location search and reverse geocoding"},
+        {"name": "Weather Alerts", "description": "Active alerts and warnings"},
+        {"name": "Downloads", "description": "PDF and Excel report downloads"},
+        {"name": "ML Prediction", "description": "Machine learning predictions"},
+        {"name": "Internationalization", "description": "Multi-language support"},
+        {"name": "API Keys", "description": "API key management"},
+        {"name": "Auth", "description": "Authentication endpoints"},
+        {"name": "Admin", "description": "Admin dashboard and analytics"},
+        {"name": "Health", "description": "Health checks and metrics"},
+    ]
 )
 
 # Add CORS middleware
@@ -94,9 +154,42 @@ app.add_middleware(RateLimiterMiddleware)
 session_middleware = SessionMiddleware(app)
 set_session_middleware(session_middleware)
 
-# Include routers
+# Include Phase 1 routers
 app.include_router(auth_router)
 app.include_router(metrics_router)
+
+# Include Phase 2 routers (conditionally based on feature flags)
+if settings.FEATURE_WEATHER_V2:
+    app.include_router(weather_v2_router)
+    logger.info("Weather V2 routes enabled")
+
+if settings.FEATURE_GEOCODING:
+    app.include_router(geocode_router)
+    logger.info("Geocoding routes enabled")
+
+if settings.FEATURE_ALERTS:
+    app.include_router(alerts_router)
+    logger.info("Alerts routes enabled")
+
+if settings.FEATURE_DOWNLOADS:
+    app.include_router(downloads_router)
+    logger.info("Downloads routes enabled")
+
+if settings.FEATURE_API_KEYS:
+    app.include_router(apikeys_router)
+    logger.info("API Keys routes enabled")
+
+if settings.FEATURE_ML_PREDICTION:
+    app.include_router(predict_router)
+    logger.info("ML Prediction routes enabled")
+
+if settings.FEATURE_ADMIN_DASHBOARD:
+    app.include_router(admin_router)
+    logger.info("Admin dashboard routes enabled")
+
+if settings.FEATURE_I18N:
+    app.include_router(i18n_router)
+    logger.info("i18n routes enabled")
 
 
 # ==================== DATABASE CONNECTION (Legacy Support) ====================

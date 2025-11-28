@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # Application settings
     APP_NAME: str = "IntelliWeather"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "2.0.0"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
     DEBUG: bool = False
@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     CACHE_TTL_SECONDS: int = 3600  # 1 hour default
     CACHE_MAX_SIZE: int = 1000  # Maximum number of cached items
     CACHE_CLEANUP_INTERVAL: int = 300  # 5 minutes
+    GEOCODE_CACHE_TTL_SECONDS: int = 86400  # 24 hours for geocoding
     
     # Session settings
     SESSION_TIMEOUT_SECONDS: int = 86400  # 24 hours
@@ -67,6 +68,7 @@ class Settings(BaseSettings):
     # External APIs
     OPEN_METEO_API_URL: str = "https://api.open-meteo.com/v1/forecast"
     OPEN_METEO_AIR_QUALITY_URL: str = "https://air-quality-api.open-meteo.com/v1/air-quality"
+    OPEN_METEO_HISTORICAL_URL: str = "https://archive-api.open-meteo.com/v1/archive"
     GEOCODING_API_URL: str = "https://geocoding-api.open-meteo.com/v1/search"
     
     # Popular locations to pre-cache (lat, lon, name)
@@ -75,7 +77,12 @@ class Settings(BaseSettings):
         "51.5074,-0.1278,London",
         "35.6762,139.6503,Tokyo",
         "48.8566,2.3522,Paris",
-        "28.6139,77.2090,New Delhi"
+        "28.6139,77.2090,New Delhi",
+        "31.5204,74.3587,Lahore",
+        "24.8607,67.0011,Karachi",
+        "19.0760,72.8777,Mumbai",
+        "40.4168,-3.7038,Madrid",
+        "25.2048,55.2708,Dubai"
     ]
     
     # Observability
@@ -86,6 +93,42 @@ class Settings(BaseSettings):
     # CORS settings
     CORS_ORIGINS: List[str] = ["*"]
     CORS_ALLOW_CREDENTIALS: bool = True
+    
+    # ==================== PHASE 2 FEATURE FLAGS ====================
+    
+    # Feature toggles (all disabled by default for safety)
+    FEATURE_WEATHER_V2: bool = True  # Hourly/daily/historical endpoints
+    FEATURE_GEOCODING: bool = True  # Geocoding endpoints
+    FEATURE_ALERTS: bool = True  # Weather alerts
+    FEATURE_DOWNLOADS: bool = True  # PDF/Excel downloads
+    FEATURE_ADMIN_DASHBOARD: bool = True  # Admin analytics
+    FEATURE_DARK_MODE: bool = True  # Frontend dark mode
+    FEATURE_I18N: bool = True  # Multi-language support
+    FEATURE_API_KEYS: bool = True  # API key management
+    FEATURE_ML_PREDICTION: bool = True  # ML temperature prediction
+    
+    # Alerts configuration
+    ALERTS_PREFETCH_INTERVAL_HOURS: int = 6
+    ALERTS_ENABLED: bool = True
+    
+    # Download/Reports configuration
+    REPORTS_CACHE_TTL_SECONDS: int = 1800  # 30 minutes
+    REPORTS_MAX_DAYS: int = 30
+    
+    # API Keys configuration
+    API_KEY_RATE_LIMIT_DEFAULT: int = 100  # Requests per minute per key
+    API_KEY_ENABLED: bool = True
+    
+    # ML Prediction configuration
+    ML_MODEL_RETRAIN_HOURS: int = 24
+    ML_HISTORICAL_DAYS: int = 365
+    
+    # i18n configuration
+    DEFAULT_LANGUAGE: str = "en"
+    SUPPORTED_LANGUAGES: List[str] = ["en", "hi", "ur", "ar", "es"]
+    
+    # Admin configuration
+    ADMIN_EMAILS: List[str] = []  # List of admin email addresses
     
     def get_data_path(self, filename: str) -> str:
         """Get the full path for a data file."""
@@ -103,6 +146,10 @@ class Settings(BaseSettings):
                     "name": ",".join(parts[2:])
                 })
         return locations
+    
+    def is_admin(self, email: str) -> bool:
+        """Check if an email is an admin."""
+        return email.lower() in [e.lower() for e in self.ADMIN_EMAILS]
 
 
 @lru_cache()
