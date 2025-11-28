@@ -1,0 +1,26 @@
+apiVersion: v2
+name: intelliweather
+description: Production-grade Weather API with caching, auth, and observability
+type: application
+version: 3.0.0
+appVersion: "3.0.0"
+keywords:
+  - weather
+  - api
+  - fastapi
+  - python
+maintainers:
+  - name: IntelliWeather Team
+    email: team@intelliweather.io
+home: https://github.com/CodersAcademy006/Weather-API
+sources:
+  - https://github.com/CodersAcademy006/Weather-API
+dependencies:
+  - name: redis
+    version: "17.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: postgresql
+    version: "12.x.x"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
