@@ -15,7 +15,7 @@ email-validator>=2.0.0
 requests>=2.31.0
 httpx>=0.24.0
 
-# Database (optional)
+# Database (optional PostgreSQL)
 psycopg2-binary>=2.9.0
 
 # Authentication
@@ -32,8 +32,16 @@ openpyxl>=3.1.0
 # matplotlib>=3.7.0
 # reportlab>=4.0.0
 
-# Observability
+# Phase 3: Observability
+prometheus-client>=0.17.0
 # sentry-sdk>=1.0.0
+
+# Phase 3: Background Jobs (optional)
+# rq>=1.15.0
+# celery>=5.3.0
+
+# Phase 3: Notifications (optional)
+# pywebpush>=1.14.0
 
 # Development & Testing
 pytest>=7.0.0

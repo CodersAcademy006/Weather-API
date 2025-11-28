@@ -1,0 +1,120 @@
+# IntelliWeather Alertmanager Rules
+# Alert rules for monitoring the weather API service
+
+groups:
+  - name: intelliweather.rules
+    rules:
+      # High Error Rate Alert
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_request_total{job="intelliweather", status=~"5.."}[5m]))
+            /
+            sum(rate(http_request_total{job="intelliweather"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # High Latency Alert
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="intelliweather"}[5m])) by (le))
+          > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile latency is {{ $value | humanizeDuration }}"
+
+      # Low Cache Hit Ratio
+      - alert: LowCacheHitRatio
+        expr: |
+          (
+            sum(rate(cache_hits_total{job="intelliweather"}[10m]))
+            /
+            (sum(rate(cache_hits_total{job="intelliweather"}[10m])) + sum(rate(cache_misses_total{job="intelliweather"}[10m])))
+          ) < 0.5
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit ratio"
+          description: "Cache hit ratio is {{ $value | humanizePercentage }}"
+
+      # Service Down
+      - alert: ServiceDown
+        expr: up{job="intelliweather"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "IntelliWeather service is down"
+          description: "The IntelliWeather API service has been down for more than 1 minute"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            container_memory_usage_bytes{container="intelliweather"}
+            /
+            container_spec_memory_limit_bytes{container="intelliweather"}
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: |
+          (
+            sum(rate(container_cpu_usage_seconds_total{container="intelliweather"}[5m]))
+            /
+            sum(container_spec_cpu_quota{container="intelliweather"} / container_spec_cpu_period{container="intelliweather"})
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value | humanizePercentage }}"
+
+      # Pod Restart Alert
+      - alert: PodRestartingTooOften
+        expr: |
+          increase(kube_pod_container_status_restarts_total{container="intelliweather"}[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod restarting too frequently"
+          description: "Pod has restarted {{ $value }} times in the last hour"
+
+      # Rate Limiting Active
+      - alert: RateLimitingActive
+        expr: |
+          sum(rate(http_request_total{job="intelliweather", status="429"}[5m])) > 10
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Rate limiting is active"
+          description: "{{ $value }} requests/sec are being rate limited"
+
+      # External API Failures
+      - alert: ExternalAPIFailures
+        expr: |
+          sum(rate(external_api_errors_total{job="intelliweather"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "External API failures detected"
+          description: "External API (Open-Meteo) is failing at {{ $value }} errors/sec"

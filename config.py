@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # Application settings
     APP_NAME: str = "IntelliWeather"
-    APP_VERSION: str = "2.0.0"
+    APP_VERSION: str = "3.0.0"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
     DEBUG: bool = False
@@ -129,6 +129,52 @@ class Settings(BaseSettings):
     
     # Admin configuration
     ADMIN_EMAILS: List[str] = []  # List of admin email addresses
+    
+    # ==================== PHASE 3 FEATURE FLAGS ====================
+    
+    # Notifications
+    FEATURE_NOTIFICATIONS: bool = True
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SENDGRID_API_KEY: Optional[str] = None
+    FROM_EMAIL: str = "noreply@intelliweather.io"
+    
+    # Twilio SMS
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_PHONE_NUMBER: Optional[str] = None
+    
+    # Web Push
+    VAPID_PRIVATE_KEY: Optional[str] = None
+    VAPID_PUBLIC_KEY: Optional[str] = None
+    VAPID_EMAIL: str = "admin@intelliweather.io"
+    
+    # Background Jobs
+    FEATURE_BACKGROUND_JOBS: bool = True
+    JOB_QUEUE_BACKEND: str = "memory"  # Options: "memory", "redis", "rq", "celery"
+    
+    # PostgreSQL (alternative to CSV storage)
+    POSTGRES_URL: Optional[str] = None
+    
+    # Observability
+    PROMETHEUS_ENABLED: bool = True
+    GRAFANA_ENABLED: bool = False
+    
+    # Growth Features
+    FEATURE_ANALYTICS: bool = True
+    FEATURE_REFERRALS: bool = True
+    FEATURE_SHAREABLE_LINKS: bool = True
+    FEATURE_SOCIAL_PREVIEW: bool = True
+    
+    # Access Tiers
+    FREE_TIER_REQUESTS_PER_DAY: int = 100
+    PRO_TIER_REQUESTS_PER_DAY: int = 10000
+    
+    # Animation settings
+    FEATURE_ANIMATIONS: bool = True
+    REDUCED_MOTION_DEFAULT: bool = False
     
     def get_data_path(self, filename: str) -> str:
         """Get the full path for a data file."""

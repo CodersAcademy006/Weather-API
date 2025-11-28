@@ -1,0 +1,180 @@
+# IntelliWeather Helm Chart Values
+# Override these values for your environment
+
+# Replica count
+replicaCount: 3
+
+image:
+  repository: intelliweather
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Image pull secrets (for private registries)
+imagePullSecrets: []
+
+# Service account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics/prometheus"
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Container security context
+securityContext:
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: weather.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: intelliweather-tls
+      hosts:
+        - weather.example.com
+
+# Resource limits
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Environment variables
+env:
+  APP_HOST: "0.0.0.0"
+  APP_PORT: "8000"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  DATA_DIR: "/app/data"
+  CACHE_TTL_SECONDS: "3600"
+  SESSION_TIMEOUT_SECONDS: "86400"
+  RATE_LIMIT_PER_MIN: "60"
+  DEFAULT_LANGUAGE: "en"
+
+# Secret environment variables (reference existing secrets)
+secretEnv:
+  - name: SECRET_KEY
+    secretName: intelliweather-secrets
+    secretKey: secret-key
+  - name: REDIS_URL
+    secretName: intelliweather-secrets
+    secretKey: redis-url
+    optional: true
+  - name: SENTRY_DSN
+    secretName: intelliweather-secrets
+    secretKey: sentry-dsn
+    optional: true
+
+# Persistent storage
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+# Health probes
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Redis subchart configuration
+redis:
+  enabled: false
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+
+# PostgreSQL subchart configuration
+postgresql:
+  enabled: false
+  auth:
+    username: intelliweather
+    password: ""
+    database: intelliweather
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+
+# Prometheus ServiceMonitor
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  labels: {}
+
+# Grafana dashboard ConfigMap
+grafanaDashboard:
+  enabled: false
+  labels:
+    grafana_dashboard: "1"
