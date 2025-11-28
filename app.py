@@ -48,6 +48,7 @@ from routes.apikeys import router as apikeys_router
 from routes.predict import router as predict_router
 from routes.admin import router as admin_router
 from routes.i18n import router as i18n_router
+from routes.growth import router as growth_router
 
 # Initialize logging
 logger = get_logger(__name__)
@@ -190,6 +191,11 @@ if settings.FEATURE_ADMIN_DASHBOARD:
 if settings.FEATURE_I18N:
     app.include_router(i18n_router)
     logger.info("i18n routes enabled")
+
+# Phase 3: Growth features
+if settings.FEATURE_ANALYTICS or settings.FEATURE_REFERRALS or settings.FEATURE_SHAREABLE_LINKS:
+    app.include_router(growth_router)
+    logger.info("Growth routes enabled")
 
 
 # ==================== DATABASE CONNECTION (Legacy Support) ====================

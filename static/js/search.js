@@ -133,7 +133,9 @@ class SearchController {
                 `${this.apiBaseUrl}/geocode/search?q=${encodeURIComponent(query)}&limit=${this.maxResults}`,
                 { signal: AbortSignal.timeout(5000) }
             ).catch(() => 
-                fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=${this.maxResults}`)
+                fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=${this.maxResults}`,
+                    { signal: AbortSignal.timeout(5000) }
+                )
             );
             
             const data = await response.json();
