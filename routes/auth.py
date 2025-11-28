@@ -26,7 +26,15 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 # Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+try:
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    # Test the context with a simple password
+    test_hash = pwd_context.hash("test")
+    logger.info("Bcrypt context initialized successfully")
+except Exception as e:
+    logger.warning(f"Bcrypt context failed, falling back to simpler hashing: {e}")
+    import hashlib
+    pwd_context = None
 
 # Router
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -102,13 +110,50 @@ class SearchHistoryResponse(BaseModel):
 # ==================== HELPER FUNCTIONS ====================
 
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt."""
-    return pwd_context.hash(password)
+    """Hash a password using bcrypt or fallback to SHA-256."""
+    if pwd_context is not None:
+        try:
+            # Truncate password to 72 bytes to comply with bcrypt limitations
+            password_bytes = password.encode('utf-8', errors='ignore')[:72]
+            truncated_password = password_bytes.decode('utf-8', errors='ignore')
+            return pwd_context.hash(truncated_password)
+        except Exception as e:
+            logger.warning(f"Bcrypt hashing failed, using fallback: {e}")
+    
+    # Fallback to SHA-256 with salt
+    import hashlib
+    import secrets
+    salt = secrets.token_hex(16)
+    hash_obj = hashlib.sha256((password + salt).encode('utf-8'))
+    return f"sha256${salt}${hash_obj.hexdigest()}"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    if pwd_context is not None and not hashed_password.startswith('sha256$'):
+        try:
+            password_bytes = plain_password.encode('utf-8', errors='ignore')[:72]
+            truncated_password = password_bytes.decode('utf-8', errors='ignore')
+            return pwd_context.verify(truncated_password, hashed_password)
+        except Exception as e:
+            logger.warning(f"Bcrypt verification failed: {e}")
+            return False
+    
+    # Handle SHA-256 fallback
+    if hashed_password.startswith('sha256$'):
+        try:
+            import hashlib
+            parts = hashed_password.split('$')
+            if len(parts) != 3:
+                return False
+            _, salt, stored_hash = parts
+            hash_obj = hashlib.sha256((plain_password + salt).encode('utf-8'))
+            return hash_obj.hexdigest() == stored_hash
+        except Exception as e:
+            logger.error(f"SHA-256 verification failed: {e}")
+            return False
+    
+    return False
 
 
 # ==================== ENDPOINTS ====================
@@ -234,25 +279,54 @@ async def logout(request: Request, response: Response):
     """
     Log out the current user and invalidate the session.
     """
-    session_data = get_session(request)
-    
-    if not session_data.is_authenticated:
+    try:
+        session_data = get_session(request)
+        
+        if not session_data.is_authenticated or not session_data.session:
+            # Clear any existing cookies even if no valid session
+            session_middleware = get_session_middleware()
+            if session_middleware:
+                # Delete cookie by setting it with expired date
+                response.delete_cookie(
+                    key=session_middleware.cookie_name,
+                    httponly=session_middleware.cookie_httponly,
+                    secure=session_middleware.cookie_secure,
+                    samesite=session_middleware.cookie_samesite
+                )
+            
+            return AuthResponse(
+                success=True,
+                message="No active session"
+            )
+        
+        # Destroy session
+        session_middleware = get_session_middleware()
+        if session_middleware:
+            session_middleware.destroy_session(session_data.session.session_id, response)
+        
+        logger.info(f"User logged out: {session_data.user_id}")
+        
         return AuthResponse(
             success=True,
-            message="No active session"
+            message="Logged out successfully"
         )
     
-    # Destroy session
-    session_middleware = get_session_middleware()
-    if session_middleware and session_data.session:
-        session_middleware.destroy_session(session_data.session.session_id, response)
-    
-    logger.info(f"User logged out: {session_data.user_id}")
-    
-    return AuthResponse(
-        success=True,
-        message="Logged out successfully"
-    )
+    except Exception as e:
+        logger.error(f"Error during logout: {str(e)}")
+        # Still try to clear the cookie in case of error
+        session_middleware = get_session_middleware()
+        if session_middleware:
+            response.delete_cookie(
+                key=session_middleware.cookie_name,
+                httponly=session_middleware.cookie_httponly,
+                secure=session_middleware.cookie_secure,
+                samesite=session_middleware.cookie_samesite
+            )
+        
+        return AuthResponse(
+            success=True,
+            message="Logged out successfully"
+        )
 
 
 @router.get("/me", response_model=UserResponse)

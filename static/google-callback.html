@@ -20,13 +20,75 @@
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             display: flex; 
+            flex-direction: column;
             justify-content: center; 
             align-items: center; 
             min-height: 100vh; 
             margin: 0; 
-            padding: 1rem;
+            padding: 5rem 1rem 1rem;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+        /* Navigation */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            padding: 0.5rem 0;
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4));
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .nav-link.active {
+            color: white;
+            background: rgba(212, 175, 55, 0.3);
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+
         .auth-card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
@@ -84,9 +146,72 @@
             transform: translateY(-2px);
         }
         .hidden { display: none; }
+
+        /* Footer */
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 1rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .footer-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .footer-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .footer-link.active {
+            color: white;
+            background: rgba(212, 175, 55, 0.3);
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .nav-container { padding: 0 1rem; }
+            .nav-brand { font-size: 1.1rem; }
+            .nav-links { gap: 0.5rem; }
+            .nav-link { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
+            .footer-nav { flex-direction: column; gap: 0.25rem; }
+            .footer-link { display: block; width: fit-content; margin: 0 auto; }
+        }
     </style>
 </head>
 <body>
+    <!-- Navigation Header -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">
+                <span class="nav-icon">👑</span>
+                <span class="nav-title">IntelliWeather</span>
+            </a>
+            <div class="nav-links">
+                <a href="/index.html" class="nav-link">🌦️ Dashboard</a>
+                <a href="/login.html" class="nav-link">🔐 Login</a>
+                <a href="/signup.html" class="nav-link">✨ Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
     <div class="auth-card">
         <div id="loading-state">
             <div class="logo">🌦️</div>
@@ -99,15 +224,36 @@
             <div class="error-icon">⚠️</div>
             <p id="error-message" class="error-text">Authentication failed</p>
             <p class="sub-message">Please try signing in again</p>
-            <a href="./login.html" class="back-link">Back to Login</a>
+            <a href="/login.html" class="back-link">Back to Login</a>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <div class="footer-nav">
+            <a href="/index.html" class="footer-link">🌦️ Dashboard</a>
+            <a href="/login.html" class="footer-link">🔐 Login</a>
+            <a href="/signup.html" class="footer-link">✨ Sign Up</a>
+            <a href="/docs" class="footer-link" target="_blank">📚 Docs</a>
+        </div>
+    </footer>
     
     <script>
         // Get API base URL dynamically
-        const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
-            ? `http://${window.location.hostname}:8000`
-            : window.location.origin;
+        const API_BASE_URL = (function() {
+            const hostname = window.location.hostname;
+            // For GitHub Codespaces, use the current origin
+            if (hostname.includes('githubpreview.dev') || hostname.includes('app.github.dev')) {
+                return window.location.origin;
+            }
+            // For local development
+            if (hostname === '127.0.0.1' || hostname === 'localhost') {
+                return `http://${hostname}:8000`;
+            }
+            // For production or other environments
+            return window.location.origin;
+        })();
+        console.log(`Google callback page detected API Base URL: ${API_BASE_URL}`);
 
         window.onload = async function() {
             const messageEl = document.getElementById('message');
@@ -136,9 +282,11 @@
 
                     const data = await response.json();
 
-                    if (response.ok) {
+                    if (response.ok && data.success) {
                         messageEl.textContent = 'Success! Redirecting to dashboard...';
-                        localStorage.setItem('weatherAppToken', data.access_token);
+                        if (data.user) {
+                            localStorage.setItem('weatherAppUser', JSON.stringify(data.user));
+                        }
                         setTimeout(() => {
                             window.location.href = './index.html';
                         }, 1000);

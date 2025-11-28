@@ -35,7 +35,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2rem 1rem;
+            padding: 6rem 1rem 2rem;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             position: relative;
             overflow-x: hidden;
@@ -110,10 +110,83 @@
             100% { transform: translateY(110vh) rotate(20deg); opacity: 0; } 
         }
 
+        /* Navigation */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            z-index: 1000;
+            padding: 0.5rem 0;
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4));
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            background: transparent;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .nav-link.active {
+            color: white;
+            background: rgba(212, 175, 55, 0.3);
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.2) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+            color: #fca5a5 !important;
+        }
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3) !important;
+            color: white !important;
+        }
+
         /* Connection Status */
         .connection-status {
             position: fixed;
-            top: 1.5rem;
+            top: 5rem;
             right: 1.5rem;
             display: flex;
             align-items: center;
@@ -403,17 +476,70 @@
 
         /* Footer */
         .footer {
-            margin-top: 2rem; padding-top: 1.5rem;
-            border-top: 1px solid rgba(212, 175, 55, 0.2);
-            text-align: center;
-            color: var(--text-muted); font-size: 0.85rem;
+            margin-top: 2rem;
+            padding: 2rem 0 1rem;
+            border-top: 2px solid rgba(212, 175, 55, 0.2);
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.05), rgba(123, 67, 151, 0.05));
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
         }
-        .footer a { color: var(--royal-gold); text-decoration: none; font-weight: 500; transition: color 0.3s ease; }
-        .footer a:hover { color: var(--royal-purple); }
+        .footer-content {
+            text-align: center;
+        }
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .footer-link:hover {
+            color: var(--royal-gold);
+            background: rgba(212, 175, 55, 0.1);
+            border-color: rgba(212, 175, 55, 0.2);
+        }
+        .footer-link.active {
+            color: var(--royal-purple);
+            background: rgba(212, 175, 55, 0.15);
+            border-color: rgba(212, 175, 55, 0.3);
+        }
+        .footer-info {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .footer-info p {
+            margin: 0.25rem 0;
+        }
+        .footer-info a {
+            color: var(--royal-gold);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .footer-info a:hover {
+            color: var(--royal-purple);
+        }
+        .footer-version {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
-            body { padding: 1rem 0.75rem; }
+            body { padding: 5rem 0.75rem 2rem; }
+            .nav-container { padding: 0 1rem; }
+            .nav-brand { font-size: 1.1rem; }
+            .nav-links { gap: 0.5rem; }
+            .nav-link { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
             .dashboard { padding: 1.5rem; border-radius: var(--radius-lg); }
             .dashboard::before { font-size: 2rem; top: -15px; }
             .header { flex-direction: column; align-items: flex-start; }
@@ -425,7 +551,9 @@
             .main-display .icon { font-size: 6rem; }
             .details-grid { grid-template-columns: 1fr; }
             .forecast-item { grid-template-columns: 1fr 0.6fr 1fr 1fr; padding: 0.9rem 1rem; }
-            .connection-status { top: auto; bottom: 1rem; right: 1rem; font-size: 0.8rem; padding: 0.5rem 1rem; }
+            .connection-status { top: 5.5rem; right: 1rem; font-size: 0.8rem; padding: 0.5rem 1rem; }
+            .footer-nav { flex-direction: column; gap: 0.5rem; }
+            .footer-link { display: block; width: fit-content; margin: 0 auto; }
         }
     </style>
 </head>
@@ -437,6 +565,21 @@
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
     <div class="rain" id="rain"></div>
+
+    <!-- Navigation Header -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="nav-icon">👑</span>
+                <span class="nav-title">IntelliWeather</span>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link active">🌦️ Dashboard</a>
+                <a href="/login.html" class="nav-link" id="auth-link">🔐 Login</a>
+                <button class="nav-link logout-btn" id="logout-btn" style="display: none;">🚪 Logout</button>
+            </div>
+        </div>
+    </nav>
 
     <!-- Connection Status -->
     <div class="connection-status connecting" id="connection-status">
@@ -528,15 +671,33 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Powered by <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> • Built with ❤️</p>
+            <div class="footer-content">
+                <div class="footer-nav">
+                    <a href="/" class="footer-link active">🌦️ Dashboard</a>
+                    <a href="/login.html" class="footer-link">🔐 Login</a>
+                    <a href="/signup.html" class="footer-link">✨ Sign Up</a>
+                    <a href="/api/info" class="footer-link" target="_blank">📊 API Info</a>
+                    <a href="/docs" class="footer-link" target="_blank">📚 API Docs</a>
+                </div>
+                <div class="footer-info">
+                    <p>Powered by <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> • Built with ❤️ for royal weather experience</p>
+                    <p class="footer-version">IntelliWeather v2.0 • <span id="user-status">Guest User</span></p>
+                </div>
+            </div>
         </footer>
     </div>
 
     <script>
         // ==================== CONFIGURATION ====================
-        const API_BASE_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
-            ? `http://${window.location.hostname}:8000`
-            : window.location.origin;
+        // Prefer same-origin by default; allows reverse proxies (e.g., NGINX) to work
+        // You can override via window.INTELLIWEATHER_API_BASE set before this script
+        const API_BASE_URL = (function() {
+            const override = window.INTELLIWEATHER_API_BASE;
+            const origin = window.location.origin;
+            const apiUrl = override || origin;
+            console.log(`Detected API Base URL: ${apiUrl}`);
+            return apiUrl;
+        })();
 
         // ==================== STATE ====================
         let currentLat = null, currentLon = null, currentLocationName = "Your Location";
@@ -600,21 +761,44 @@
             return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         }
 
-        async function fetchWithRetry(url, options = {}, retries = 3) {
+        // Cross-browser timeout signal (polyfilled if AbortSignal.timeout is unavailable)
+        function timeoutSignal(ms) {
+            try {
+                if (typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal) {
+                    return AbortSignal.timeout(ms);
+                }
+            } catch (_) { /* ignore */ }
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), ms);
+            return controller.signal;
+        }
+
+        async function fetchWithRetry(url, options = {}, retries = 2) {
+            console.log(`Making API request to: ${url}`);
             for (let i = 0; i < retries; i++) {
                 try {
                     setConnectionStatus('connecting');
-                    const response = await fetch(url, { ...options, signal: AbortSignal.timeout(10000) });
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const response = await fetch(url, {
+                        credentials: 'include',
+                        ...options,
+                        // Ensure we always have a working timeout signal
+                        signal: options.signal || timeoutSignal(8000)
+                    });
+                    console.log(`API response status: ${response.status}`);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`API Error ${response.status}:`, errorText);
+                        throw new Error(`HTTP ${response.status}: ${errorText}`);
+                    }
                     setConnectionStatus('connected');
                     return response;
                 } catch (error) {
-                    console.warn(`Attempt ${i + 1} failed:`, error.message);
+                    console.warn(`Attempt ${i + 1} failed for ${url}:`, (error && error.message) || error);
                     if (i === retries - 1) {
                         setConnectionStatus('disconnected');
                         throw error;
                     }
-                    await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+                    await new Promise(r => setTimeout(r, 1000 * (i + 1)));
                 }
             }
         }
@@ -825,14 +1009,61 @@
             }
         }
 
+        // ==================== AUTHENTICATION ====================
+        function checkAuthStatus() {
+            const user = localStorage.getItem('weatherAppUser');
+            const authLink = document.getElementById('auth-link');
+            const logoutBtn = document.getElementById('logout-btn');
+            const userStatus = document.getElementById('user-status');
+            
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    authLink.style.display = 'none';
+                    logoutBtn.style.display = 'inline-block';
+                    userStatus.textContent = `Welcome, ${userData.username}`;
+                } catch (e) {
+                    // Invalid user data, treat as logged out
+                    localStorage.removeItem('weatherAppUser');
+                    authLink.style.display = 'inline-block';
+                    logoutBtn.style.display = 'none';
+                    userStatus.textContent = 'Guest User';
+                }
+            } else {
+                authLink.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+                userStatus.textContent = 'Guest User';
+            }
+        }
+
+        async function logout() {
+            try {
+                // Call backend logout endpoint
+                await fetch(`${API_BASE_URL}/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include' // Include cookies for session
+                });
+            } catch (e) {
+                console.log('Logout API call failed, but continuing with local logout');
+            }
+            
+            localStorage.removeItem('weatherAppUser');
+            checkAuthStatus();
+            console.log('User logged out');
+        }
+
+        // ==================== NAVIGATION HANDLERS ====================
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
         // Initialize
         createStars();
+        checkAuthStatus();
         initLocation();
 
         // Connection check
         connectionCheckInterval = setInterval(async () => {
             try {
-                await fetch(`${API_BASE_URL}/healthz`, { signal: AbortSignal.timeout(5000) });
+                await fetch(`${API_BASE_URL}/healthz`, { signal: timeoutSignal(5000), credentials: 'include' });
                 setConnectionStatus('connected');
             } catch {
                 setConnectionStatus('disconnected');
