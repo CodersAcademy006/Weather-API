@@ -42,3 +42,11 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Data directory (CSV storage)
+data/
+
+# Test coverage
+htmlcov/
+.coverage
+.pytest_cache/
