@@ -1095,9 +1095,10 @@
                     setLoading(true, 'Getting your location...');
                     navigator.geolocation.getCurrentPosition(
                         position => {
+                            // Use 2 decimal places (~1km precision) - sufficient for weather, better for privacy
                             fetchAllWeatherData(
-                                position.coords.latitude.toFixed(4), 
-                                position.coords.longitude.toFixed(4), 
+                                position.coords.latitude.toFixed(2), 
+                                position.coords.longitude.toFixed(2), 
                                 "Your Current Location"
                             );
                         },
