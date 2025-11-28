@@ -377,9 +377,33 @@ class PredictionService:
             return self._fallback_prediction(lat, lon)
     
     def _fallback_prediction(self, lat: float, lon: float) -> PredictionResult:
-        """Fallback prediction when model is unavailable."""
-        # Use a simple climatological estimate based on latitude
-        # Higher latitudes = cooler, lower = warmer
+        """
+        Fallback prediction when model is unavailable.
+        
+        LIMITATIONS:
+        - Uses very simple latitude-based formula
+        - Does not account for:
+          - Hemisphere differences (same formula for N/S)
+          - Seasonal variations
+          - Longitude effects (coastal vs inland)
+          - Elevation
+          - Local climate patterns
+        
+        The formula: base_temp = 25 - abs(lat) * 0.5
+        - Equator (0°): ~25°C
+        - Tropics (±23°): ~13.5°C
+        - Temperate (±45°): ~2.5°C
+        - Polar (±90°): ~-20°C
+        
+        This provides a rough estimate better than no prediction,
+        but should be clearly marked as "fallback" quality.
+        
+        For better fallback predictions, consider:
+        - Historical climate averages per region
+        - Seasonal adjustments based on month
+        - More sophisticated climate models
+        """
+        # Simple climatological estimate based on latitude
         base_temp = 25 - abs(lat) * 0.5
         
         return PredictionResult(

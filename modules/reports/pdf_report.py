@@ -2,7 +2,19 @@
 PDF Report Generator
 
 Generates PDF weather reports with charts and formatted data.
-Uses a simple approach with built-in libraries when possible.
+
+LIMITATIONS OF CURRENT IMPLEMENTATION:
+- Uses basic PDF structure without proper PDF library
+- Text only, no images or complex formatting
+- Fixed font (Courier)
+- Simple text-based charts instead of graphical charts
+- Limited to approximately one page of content
+
+FOR PRODUCTION USE:
+- Install reportlab: pip install reportlab
+- Replace _create_simple_pdf() with proper reportlab implementation
+- Add matplotlib for graphical charts: pip install matplotlib
+- Consider using weasyprint for HTML-to-PDF conversion
 """
 
 import io
@@ -20,10 +32,16 @@ class PDFReportGenerator:
     """
     Generates PDF weather reports.
     
-    Features:
-    - Weather data tables
-    - Simple text-based charts
-    - Branding and metadata
+    Current implementation creates basic valid PDFs with:
+    - Weather data tables as plain text
+    - ASCII-based temperature charts
+    - Basic branding and metadata
+    
+    For production, upgrade to reportlab for:
+    - Rich formatting and fonts
+    - Graphical charts with matplotlib
+    - Multiple pages
+    - Images and logos
     """
     
     def __init__(self):

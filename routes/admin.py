@@ -57,14 +57,13 @@ class SystemHealth(BaseModel):
 
 
 def check_admin(user) -> bool:
-    """Check if user has admin privileges."""
-    # Check if user email is in admin list
-    if settings.is_admin(user.email):
-        return True
-    # Also allow if username starts with 'admin'
-    if user.username.lower().startswith("admin"):
-        return True
-    return False
+    """
+    Check if user has admin privileges.
+    
+    Admin access is determined ONLY by the ADMIN_EMAILS configuration.
+    Set ADMIN_EMAILS environment variable with comma-separated admin emails.
+    """
+    return settings.is_admin(user.email)
 
 
 async def require_admin(user = Depends(require_auth)):

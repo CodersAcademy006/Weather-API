@@ -41,9 +41,38 @@ def _get_weather_alerts(lat: float, lon: float) -> List[WeatherAlert]:
     """
     Fetch weather alerts for a location.
     
-    Note: Open-Meteo doesn't have a direct alerts API.
-    This simulates alerts based on weather conditions.
-    In production, integrate with a real alerts API like NWS.
+    CURRENT IMPLEMENTATION:
+    This generates simulated alerts based on current weather conditions
+    since Open-Meteo doesn't have a dedicated alerts API.
+    
+    ALERT GENERATION THRESHOLDS:
+    - Thunderstorm: weather_code in [95, 96, 99]
+      - Code 99 (severe thunderstorm with hail) = SEVERE severity
+      - Codes 95, 96 = MODERATE severity
+    
+    - High Wind: wind_speed > 60 km/h
+      - wind_speed > 90 km/h = SEVERE severity
+      - wind_speed > 60 km/h = MODERATE severity
+    
+    - Heavy Precipitation: precipitation > 10 mm/hour
+      - Always MODERATE severity
+    
+    - Winter Weather: weather_code in [71, 73, 75, 77, 85, 86]
+      - Codes 75, 86 (heavy snow) = MODERATE severity
+      - Other codes = MINOR severity
+    
+    FOR PRODUCTION USE:
+    Integrate with real alert sources:
+    - NWS API (US): https://www.weather.gov/documentation/services-web-api
+    - MeteoAlarm (Europe): https://meteoalarm.org/
+    - Environment Canada Weather Alerts
+    - Japan Meteorological Agency
+    
+    These provide official government-issued warnings with:
+    - Accurate timing (start/end)
+    - Affected geographic areas
+    - Official severity classifications
+    - Detailed instructions
     """
     try:
         # Fetch current weather to generate condition-based alerts
