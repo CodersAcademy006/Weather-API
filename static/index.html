@@ -1380,12 +1380,14 @@
         
         // ==================== THEME TOGGLE ====================
         themeToggle.addEventListener('click', () => {
-            const newTheme = window.themeManager.toggle();
-            themeToggle.querySelector('.theme-icon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            if (window.themeManager) {
+                const newTheme = window.themeManager.toggle();
+                themeToggle.querySelector('.theme-icon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            }
         });
         
         // Update theme icon on load
-        if (window.themeManager.isDark()) {
+        if (window.themeManager && window.themeManager.isDark()) {
             themeToggle.querySelector('.theme-icon').textContent = '☀️';
         }
         

@@ -5,6 +5,28 @@ All notable changes to IntelliWeather API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2024-11-29
+
+### Fixed - Main Branch Compatibility
+
+#### Backend Compatibility
+- **SQLite Integration**: Merged SQLite database functions from main branch for seamless compatibility
+- **Graceful Fallbacks**: All Phase 2/3 modules now load conditionally with graceful fallbacks
+- **Error Handling**: Improved try/catch blocks for all module imports to prevent crashes
+- **Database Initialization**: Combined SQLite init with CSV storage initialization
+
+#### Frontend Fixes
+- **Theme Manager**: Added null checks for `window.themeManager` to prevent undefined errors
+- **Script Loading**: Fixed race condition in theme initialization
+
+#### Documentation
+- Updated CHANGELOG with compatibility fixes
+- Confirmed all 27 tests pass
+
+### Changed
+- `app.py` now integrates SQLite (main branch) with in-memory caching (Phase 2) seamlessly
+- Server startup message matches main branch output for consistency
+
 ## [3.0.0] - 2024-01-16
 
 ### Added - Phase 3 Features
