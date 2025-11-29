@@ -17,6 +17,7 @@
         .rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -1; }
         .rain .drop { position: absolute; bottom: 100%; width: 2px; height: 80px; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.4)); animation: drop 0.5s linear infinite; }
         @keyframes drop { 0% {transform: translateY(0vh);} 100% {transform: translateY(110vh);} }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .dashboard { background: var(--bg-card); backdrop-filter: blur(12px); padding: 2rem; border-radius: 20px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12); width: 100%; max-width: 900px; border: 1px solid rgba(255, 255, 255, 0.2); }
         .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
         .header-text h1 { margin: 0; color: var(--text-dark); font-size: 1.5rem; }
@@ -102,7 +103,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const API_BASE_URL = "http://127.0.0.1:8000";
+            // Use same-origin relative paths so the frontend works in hosted previews
+            // and when the app is served from a proxied URL (e.g. Codespaces/Cloud).
+            const API_BASE_URL = "";
             let lastCoords = { lat: null, lon: null, name: "Your Location" };
 
             // --- ALL DOM SELECTORS ---
@@ -152,60 +155,102 @@
             // --- DATA FETCHING & UI ORCHESTRATION ---
             async function fetchAllWeatherData(lat, lon, name) {
                 lastCoords = { lat, lon, name };
-                locationNameEl.textContent = `Loading for ${name}...`;
+                locationNameEl.innerHTML = `<span style="animation: pulse 1.5s ease-in-out infinite;">⏳ Loading weather for ${name}...</span>`;
+                
+                console.log(`🔄 Fetching weather data for ${name} at ${lat}, ${lon}`);
+                const startTime = Date.now();
+
                 try {
-                    const [weatherRes, hourlyRes, dailyRes, aqiAlertsRes] = await Promise.all([
-                        fetch(`${API_BASE_URL}/weather?lat=${lat}&lon=${lon}`),
-                        fetch(`${API_BASE_URL}/hourly?lat=${lat}&lon=${lon}`),
-                        fetch(`${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}`),
-                        fetch(`${API_BASE_URL}/aqi-alerts?lat=${lat}&lon=${lon}`)
+                    // Fetch with timeout to prevent hanging
+                    const fetchWithTimeout = (url, timeout = 15000) => {
+                        return Promise.race([
+                            fetch(url),
+                            new Promise((_, reject) => 
+                                setTimeout(() => reject(new Error('Request timeout')), timeout)
+                            )
+                        ]);
+                    };
+
+                    const [weatherRes, hourlyRes, dailyRes, aqiAlertsRes] = await Promise.allSettled([
+                        fetchWithTimeout(`${API_BASE_URL}/weather?lat=${lat}&lon=${lon}`),
+                        fetchWithTimeout(`${API_BASE_URL}/hourly?lat=${lat}&lon=${lon}`),
+                        fetchWithTimeout(`${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}`),
+                        fetchWithTimeout(`${API_BASE_URL}/aqi-alerts?lat=${lat}&lon=${lon}`)
                     ]);
-                    if (!weatherRes.ok || !hourlyRes.ok || !dailyRes.ok || !aqiAlertsRes.ok) throw new Error(`API request failed: ${weatherRes.status}`);
                     
-                    const weatherData = await weatherRes.json();
-                    const hourlyData = await hourlyRes.json();
-                    const dailyData = await dailyRes.json();
-                    const aqiAlertsData = await aqiAlertsRes.json();
+                    // Extract successful responses or null
+                    const weatherData = weatherRes.status === 'fulfilled' && weatherRes.value.ok ? await weatherRes.value.json() : null;
+                    const hourlyData = hourlyRes.status === 'fulfilled' && hourlyRes.value.ok ? await hourlyRes.value.json() : [];
+                    const dailyData = dailyRes.status === 'fulfilled' && dailyRes.value.ok ? await dailyRes.value.json() : [];
+                    const aqiAlertsData = aqiAlertsRes.status === 'fulfilled' && aqiAlertsRes.value.ok ? await aqiAlertsRes.value.json() : {aqi: null, alerts: []};
+                    
+                    console.log(`📡 API Results: weather=${weatherRes.status}, hourly=${hourlyRes.status}, daily=${dailyRes.status}, aqi=${aqiAlertsRes.status}`);
+                    
+                    if (!weatherData) throw new Error('Weather data unavailable (timeout or error)');
+
+                    const loadTime = Date.now() - startTime;
+                    console.log('📦 Received data:', { 
+                        weather: weatherData ? 'OK' : 'FAILED', 
+                        hourly: (hourlyData && hourlyData.length) ? hourlyData.length + ' hours' : 'FAILED',
+                        daily: (dailyData && dailyData.length) ? dailyData.length + ' days' : 'FAILED',
+                        aqi: aqiAlertsData && aqiAlertsData.aqi ? 'OK' : 'FAILED'
+                    });
 
                     updateUI(name, weatherData, hourlyData, dailyData, aqiAlertsData);
+                    console.log(`✅ UI updated successfully in ${loadTime}ms!`);
                 } catch (error) {
-                    console.error("Failed to fetch weather data:", error);
-                    locationNameEl.textContent = "Failed to load data";
+                    console.error("❌ Failed to fetch weather data:", error);
+                    locationNameEl.innerHTML = `Failed to load data.<br><small style="font-size:0.8rem; color:red;">${error.message}</small>`;
+                    
+                    // Show helpful hint if connection failed
+                    if (error.message.includes("Failed to fetch") || error.message.includes("NetworkError")) {
+                         document.getElementById('alert-banner').style.display = 'block';
+                         document.getElementById('alert-banner').innerHTML = `
+                            <strong>Connection Failed!</strong><br>
+                            Make sure the backend is running on port 8000.<br>
+                            If you are using "Live Server", please open the link from the terminal instead (http://localhost:8000).
+                         `;
+                    }
                 }
             }
 
             function updateUI(name, current, hourly, daily, aqiAlerts) {
                 locationNameEl.textContent = name;
-                updateBackground(current.weather_code);
-                updateAlertsUI(aqiAlerts.alerts);
-                updateCurrentWeatherUI(current, daily[0]);
-                renderHourlyForecast(hourly);
-                updateDailyForecastUI(daily);
-                updateAqiUI(aqiAlerts.aqi);
+                if (current && current.weather_code) updateBackground(current.weather_code);
+                if (aqiAlerts && aqiAlerts.alerts) updateAlertsUI(aqiAlerts.alerts);
+                if (current && daily && daily[0]) updateCurrentWeatherUI(current, daily[0]);
+                if (hourly && hourly.length > 0) renderHourlyForecast(hourly);
+                if (daily && daily.length > 0) updateDailyForecastUI(daily);
+                if (aqiAlerts && aqiAlerts.aqi) updateAqiUI(aqiAlerts.aqi);
             }
 
             // --- UI UPDATE FUNCTIONS ---
             function updateCurrentWeatherUI(current, today) {
-                document.getElementById('main-icon').textContent = getWeatherIcon(current.weather_code);
-                document.getElementById('main-temp').textContent = `${Math.round(current.temperature_c)}°`;
-                document.getElementById('weather-description').textContent = getWeatherDescription(current.weather_code);
-                document.getElementById('feels-like').textContent = `${Math.round(current.apparent_temperature)}°`;
-                document.getElementById('humidity').textContent = `${current.humidity_pct}%`;
-                document.getElementById('wind').textContent = `${current.wind_speed_mps} m/s`;
-                document.getElementById('uv-index').textContent = current.uv_index;
-                document.getElementById('precip-sum').textContent = `${today.precipitation_sum} mm`;
+                if (!current) return;
+                document.getElementById('main-icon').textContent = getWeatherIcon(current.weather_code || 0);
+                document.getElementById('main-temp').textContent = `${Math.round(current.temperature_c || 0)}°`;
+                document.getElementById('weather-description').textContent = getWeatherDescription(current.weather_code || 0);
+                document.getElementById('feels-like').textContent = `${Math.round(current.apparent_temperature || 0)}°`;
+                document.getElementById('humidity').textContent = `${current.humidity_pct || 0}%`;
+                document.getElementById('wind').textContent = `${current.wind_speed_mps || 0} m/s`;
+                document.getElementById('uv-index').textContent = current.uv_index || 0;
+                document.getElementById('precip-sum').textContent = `${today && today.precipitation_sum !== undefined ? today.precipitation_sum : 0} mm`;
             }
 
             function renderHourlyForecast(data) {
                 const container = document.getElementById('hourly-forecast-container');
                 container.innerHTML = '';
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div style="padding:1rem; color:#888;">Hourly data unavailable</div>';
+                    return;
+                }
                 data.slice(0, 24).forEach(hour => {
                     const item = document.createElement('div');
                     item.className = 'hourly-item';
                     item.innerHTML = `
                         <div class="time">${new Date(hour.time).getHours()}:00</div>
-                        <div class="icon">${getWeatherIcon(hour.weather_code)}</div>
-                        <div class="temp">${Math.round(hour.temp)}°</div>
+                        <div class="icon">${getWeatherIcon(hour.weather_code || 0)}</div>
+                        <div class="temp">${Math.round(hour.temp || 0)}°</div>
                     `;
                     container.appendChild(item);
                 });
@@ -214,11 +259,15 @@
             function updateDailyForecastUI(data) {
                 const container = document.getElementById('daily-forecast-container');
                 container.innerHTML = '';
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div style="padding:1rem; color:#888;">Forecast data unavailable</div>';
+                    return;
+                }
                 data.forEach(day => {
                     const itemEl = document.createElement('div');
                     itemEl.className = 'forecast-item';
                     const date = new Date(day.date);
-                    itemEl.innerHTML = ` <div class="day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div> <div class="icon">${getWeatherIcon(day.weather_code)}</div> <div class="precip">💧 ${day.precipitation_probability_max}%</div> <div class="temps">${Math.round(day.min_temp)}° / <strong>${Math.round(day.max_temp)}°</strong></div> `;
+                    itemEl.innerHTML = ` <div class="day">${date.toLocaleDateString('en-US', { weekday: 'short' })}</div> <div class="icon">${getWeatherIcon(day.weather_code || 0)}</div> <div class="precip">💧 ${day.precipitation_probability_max || 0}%</div> <div class="temps">${Math.round(day.min_temp || 0)}° / <strong>${Math.round(day.max_temp || 0)}°</strong></div> `;
                     container.appendChild(itemEl);
                 });
             }
