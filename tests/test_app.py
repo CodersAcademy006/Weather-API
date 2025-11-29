@@ -233,7 +233,10 @@ class TestAPIEndpoints:
 
     @patch("app.fetch_hourly_forecast")
     def test_hourly_endpoint_returns_data(self, mock_fetch, test_client):
-        """Test /hourly endpoint returns forecast data."""
+        """Test /hourly endpoint returns forecast data.
+        
+        Note: fetch_hourly_forecast returns temperature_c, wind_speed_mps etc.
+        """
         mock_fetch.return_value = [
             {
                 "time": "2024-01-15T10:00",

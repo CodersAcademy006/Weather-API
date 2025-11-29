@@ -63,7 +63,7 @@ def sample_weather_data():
 
 @pytest.fixture
 def sample_hourly_forecast():
-    """Sample hourly forecast data for testing."""
+    """Sample hourly forecast data for DB testing (uses save_hourly_forecast_to_db field names)."""
     return [
         {
             "time": "2024-01-15T10:00",
