@@ -45,7 +45,7 @@ except ImportError:
     HAS_CONFIG = False
     class DefaultSettings:
         APP_NAME = "IntelliWeather"
-        APP_VERSION = "3.0.0"
+        APP_VERSION = "3.0.1"
         CORS_ORIGINS = ["*"]
         CORS_ALLOW_CREDENTIALS = True
         FEATURE_WEATHER_V2 = True

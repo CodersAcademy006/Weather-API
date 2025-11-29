@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # Application settings
     APP_NAME: str = "IntelliWeather"
-    APP_VERSION: str = "3.0.0"
+    APP_VERSION: str = "3.0.1"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
     DEBUG: bool = False
