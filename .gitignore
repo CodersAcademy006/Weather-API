@@ -50,3 +50,7 @@ data/
 htmlcov/
 .coverage
 .pytest_cache/
+
+# Database files (generated)
+*.db
+weather.db
