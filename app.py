@@ -49,6 +49,17 @@ from routes.predict import router as predict_router
 from routes.admin import router as admin_router
 from routes.i18n import router as i18n_router
 
+# Phase 3 routers (LEVEL 1 Features)
+from routes.forecast import router as forecast_router
+from routes.insights import router as insights_router
+
+# Phase 3 routers (LEVEL 2 Features)
+from routes.pollen import router as pollen_router
+from routes.marine import router as marine_router
+from routes.solar import router as solar_router
+from routes.air_quality import router as air_quality_router
+from routes.test_new import router as test_new_router
+
 # Initialize logging
 logger = get_logger(__name__)
 
@@ -118,6 +129,73 @@ Production-grade weather API with caching, authentication, and rate limiting.
 - **API Keys**: Per-key rate limiting
 - **Admin Dashboard**: Analytics and monitoring
 
+### Phase 3 - LEVEL 1 Enterprise Features
+- **Forecast V3**: 
+  - Nowcast (0-2 hours, 15-min resolution)
+  - Hourly forecasts (up to 168 hours / 7 days)
+  - Daily forecasts (up to 16 days)
+  - Hybrid Open-Meteo + WeatherAPI for reliability
+  - Complete forecast packages
+  
+- **Weather Insights** (Proprietary Calculations):
+  - Heat Index & Wind Chill
+  - Wet Bulb Temperature
+  - Fire Risk Scoring (0-100)
+  - UV Exposure Assessment with burn time
+  - Travel Disruption Risk Analysis
+  - Rain Confidence Scoring
+  - Comfort Index for outdoor activities
+  
+- **Geocoding V2 Enhancements**:
+  - Autocomplete/typeahead search
+  - Popular locations endpoint
+  - Nearby cities finder
+  
+- **Expanded Weather Metrics**:
+  - Dew point
+  - Wind gusts
+  - Visibility
+  - Snowfall
+  - Barometric pressure trends
+  - Cloud cover percentage
+
+### Phase 3 - LEVEL 2 Enterprise Features (NEW!)
+- **Pollen Forecast API**:
+  - Tree, grass, and weed pollen levels
+  - Species-specific data (alder, birch, olive, grass, mugwort, ragweed)
+  - Pollen risk scoring (0-100)
+  - Allergy recommendations and precautions
+  - Peak hours and best times for outdoor activities
+  - 7-day pollen forecast
+
+- **Marine & Coastal Weather API**:
+  - Wave height, direction, and period
+  - Swell conditions
+  - Ocean current velocity and direction
+  - Sea state classification (WMO codes)
+  - Astronomical tide predictions
+  - Marine activity risk assessment (swimming, surfing, sailing, fishing, diving)
+  - 7-day marine forecast
+
+- **Solar & Energy Weather API**:
+  - Solar irradiance (GHI, DNI, DHI)
+  - Photovoltaic (PV) yield estimation
+  - Sun position (azimuth, elevation, zenith)
+  - Daylight duration and solar noon
+  - Solar potential assessment (excellent to very poor)
+  - Temperature derating factors
+  - 16-day solar energy forecast
+
+- **Extended Air Quality API (AQI V2)**:
+  - Detailed pollutant monitoring (PM1, PM2.5, PM10, NO₂, SO₂, CO, O₃)
+  - US EPA AQI (0-500 scale)
+  - European EAQI (1-6 scale)
+  - Individual pollutant AQI calculations
+  - Health impacts per pollutant
+  - Sensitive group warnings
+  - Outdoor activity guidance
+  - 7-day air quality forecast
+
 ## Authentication
 
 Use session cookies or API keys for authentication.
@@ -126,7 +204,13 @@ Use session cookies or API keys for authentication.
     openapi_tags=[
         {"name": "Weather", "description": "Current weather and basic forecasts"},
         {"name": "Weather V2", "description": "Enhanced weather endpoints with CSV support"},
-        {"name": "Geocoding", "description": "Location search and reverse geocoding"},
+        {"name": "Forecast V3", "description": "🆕 Advanced forecasts: Nowcast, Hourly (168h), Daily (16d)"},
+        {"name": "Weather Insights", "description": "🆕 Proprietary calculations: Heat index, fire risk, UV, travel disruption"},
+        {"name": "Pollen Forecast", "description": "🆕 LEVEL 2: Tree/grass/weed pollen, allergy risk, recommendations"},
+        {"name": "Marine Weather", "description": "🆕 LEVEL 2: Waves, swell, tides, currents, marine activities"},
+        {"name": "Solar & Energy", "description": "🆕 LEVEL 2: Solar irradiance, PV yield, sun position, energy forecasts"},
+        {"name": "Air Quality (AQI V2)", "description": "🆕 LEVEL 2: Comprehensive AQI, all pollutants, health guidance"},
+        {"name": "Geocoding", "description": "Location search, reverse geocoding, autocomplete"},
         {"name": "Weather Alerts", "description": "Active alerts and warnings"},
         {"name": "Downloads", "description": "PDF and Excel report downloads"},
         {"name": "ML Prediction", "description": "Machine learning predictions"},
@@ -150,13 +234,19 @@ app.add_middleware(
 # Add rate limiter middleware
 app.add_middleware(RateLimiterMiddleware)
 
-# Add session middleware
-session_middleware = SessionMiddleware(app)
-set_session_middleware(session_middleware)
+# Session middleware will be added AFTER routes are registered
 
 # Include Phase 1 routers
 app.include_router(auth_router)
 app.include_router(metrics_router)
+
+# Test endpoint to verify routing works
+@app.get("/test-pollen")
+async def test_pollen_direct():
+    """Direct test endpoint"""
+    from modules.pollen import get_current_pollen
+    result = await get_current_pollen(40.71, -74.01)
+    return result
 
 # Include Phase 2 routers (conditionally based on feature flags)
 if settings.FEATURE_WEATHER_V2:
@@ -190,6 +280,34 @@ if settings.FEATURE_ADMIN_DASHBOARD:
 if settings.FEATURE_I18N:
     app.include_router(i18n_router)
     logger.info("i18n routes enabled")
+
+# Include Phase 3 routers (LEVEL 1 Features - Always enabled)
+app.include_router(forecast_router)
+logger.info("Forecast V3 routes enabled (LEVEL 1)")
+
+app.include_router(insights_router)
+logger.info("Weather Insights routes enabled (LEVEL 1)")
+
+# Include Phase 3 routers (LEVEL 2 Features - Always enabled)
+app.include_router(pollen_router)
+logger.info("Pollen Forecast routes enabled (LEVEL 2)")
+
+app.include_router(marine_router)
+logger.info("Marine & Coastal Weather routes enabled (LEVEL 2)")
+
+app.include_router(solar_router)
+logger.info("Solar & Energy Weather routes enabled (LEVEL 2)")
+
+app.include_router(air_quality_router)
+logger.info("Extended Air Quality (AQI V2) routes enabled (LEVEL 2)")
+
+app.include_router(test_new_router)
+logger.info("Test router enabled")
+
+# NOW add session middleware AFTER all routes are registered
+_session_middleware_inst = SessionMiddleware(app)
+set_session_middleware(_session_middleware_inst)
+logger.info("Session middleware registered after routes")
 
 
 # ==================== DATABASE CONNECTION (Legacy Support) ====================

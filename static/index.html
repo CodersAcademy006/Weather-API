@@ -456,6 +456,256 @@
         .forecast-item .temps .high { color: var(--text-primary); font-family: 'Playfair Display', serif; }
         .forecast-item .temps .low { color: var(--text-muted); }
 
+        /* Level 2 Features Sections */
+        .section-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+        }
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Scrollable Grid Layouts */
+        .pollen-grid, .marine-grid, .solar-grid, .aqi-extended-grid {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            scrollbar-width: thin;
+            scrollbar-color: var(--royal-gold) var(--item-bg);
+        }
+        .pollen-grid::-webkit-scrollbar, .marine-grid::-webkit-scrollbar, 
+        .solar-grid::-webkit-scrollbar, .aqi-extended-grid::-webkit-scrollbar { 
+            width: 8px; 
+        }
+        .pollen-grid::-webkit-scrollbar-track, .marine-grid::-webkit-scrollbar-track,
+        .solar-grid::-webkit-scrollbar-track, .aqi-extended-grid::-webkit-scrollbar-track { 
+            background: var(--item-bg); 
+            border-radius: 10px; 
+        }
+        .pollen-grid::-webkit-scrollbar-thumb, .marine-grid::-webkit-scrollbar-thumb,
+        .solar-grid::-webkit-scrollbar-thumb, .aqi-extended-grid::-webkit-scrollbar-thumb { 
+            background: linear-gradient(135deg, var(--royal-gold), var(--royal-purple-light)); 
+            border-radius: 10px; 
+        }
+
+        /* Pollen Grid */
+        .pollen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .pollen-card {
+            background: var(--item-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease backwards;
+        }
+        .pollen-card:hover {
+            background: white;
+            border-color: rgba(212, 175, 55, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .pollen-card h3 {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pollen-level {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .pollen-level.low { background: #d1fae5; color: #065f46; }
+        .pollen-level.moderate { background: #fef3c7; color: #92400e; }
+        .pollen-level.high { background: #fee2e2; color: #991b1b; }
+        .pollen-level.very-high { background: #fce7f3; color: #831843; }
+        .pollen-detail {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .pollen-detail p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Marine Grid */
+        .marine-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .marine-card {
+            background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(147, 197, 253, 0.08));
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease backwards;
+        }
+        .marine-card:hover {
+            background: white;
+            border-color: rgba(59, 130, 246, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+        }
+        .marine-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .marine-stat:last-child { border-bottom: none; }
+        .marine-stat label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .marine-stat value {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        /* Solar Grid */
+        .solar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        .solar-card {
+            background: linear-gradient(145deg, rgba(251, 191, 36, 0.08), rgba(252, 211, 77, 0.08));
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 2px solid rgba(251, 191, 36, 0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease backwards;
+        }
+        .solar-card:hover {
+            background: white;
+            border-color: rgba(251, 191, 36, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(251, 191, 36, 0.2);
+        }
+        .solar-metric {
+            margin-bottom: 1rem;
+        }
+        .solar-metric h4 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .solar-metric .value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .solar-metric .unit {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        /* AQI Extended Grid */
+        .aqi-extended-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        .aqi-summary {
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.08), rgba(52, 211, 153, 0.08));
+            padding: 2rem;
+            border-radius: var(--radius-xl);
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        .aqi-summary .aqi-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+        .aqi-summary .aqi-category {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .aqi-category.good { background: #d1fae5; color: #065f46; }
+        .aqi-category.moderate { background: #fef3c7; color: #92400e; }
+        .aqi-category.unhealthy-sensitive { background: #fed7aa; color: #9a3412; }
+        .aqi-category.unhealthy { background: #fee2e2; color: #991b1b; }
+        .aqi-category.very-unhealthy { background: #fce7f3; color: #831843; }
+        .aqi-category.hazardous { background: #f3e8ff; color: #581c87; }
+        .pollutant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .pollutant-card {
+            background: var(--item-bg);
+            padding: 1.25rem;
+            border-radius: var(--radius-lg);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .pollutant-card:hover {
+            background: white;
+            border-color: rgba(212, 175, 55, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .pollutant-card h4 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .pollutant-card .value {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .pollutant-card .unit {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .loading-placeholder {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
         /* Error State */
         .error-state { text-align: center; padding: 3rem; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -612,6 +862,10 @@
             <button class="active" data-tab="now">☀️ Now</button>
             <button data-tab="hourly">⏱️ Hourly</button>
             <button data-tab="daily">📅 7-Day</button>
+            <button data-tab="pollen">🌸 Pollen</button>
+            <button data-tab="marine">🌊 Marine</button>
+            <button data-tab="solar">☀️ Solar</button>
+            <button data-tab="aqi-extended">🫁 Air Quality</button>
         </nav>
 
         <!-- Tab Content: Current Weather -->
@@ -659,6 +913,50 @@
         <!-- Tab Content: Daily Forecast -->
         <div id="daily" class="tab-content">
             <div class="daily-forecast-list" id="daily-container"></div>
+        </div>
+
+        <!-- Tab Content: Pollen Forecast -->
+        <div id="pollen" class="tab-content">
+            <div class="section-header">
+                <h2>🌸 Pollen Forecast</h2>
+                <p>Tree, grass, and weed pollen levels with allergy guidance</p>
+            </div>
+            <div class="pollen-grid" id="pollen-container">
+                <div class="loading-placeholder">Loading pollen data...</div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Marine Conditions -->
+        <div id="marine" class="tab-content">
+            <div class="section-header">
+                <h2>🌊 Marine & Coastal Conditions</h2>
+                <p>Wave height, sea temperature, and coastal weather</p>
+            </div>
+            <div class="marine-grid" id="marine-container">
+                <div class="loading-placeholder">Loading marine data...</div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Solar & Energy -->
+        <div id="solar" class="tab-content">
+            <div class="section-header">
+                <h2>☀️ Solar & Energy Data</h2>
+                <p>Solar irradiance, PV yield, and energy production estimates</p>
+            </div>
+            <div class="solar-grid" id="solar-container">
+                <div class="loading-placeholder">Loading solar data...</div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Extended Air Quality -->
+        <div id="aqi-extended" class="tab-content">
+            <div class="section-header">
+                <h2>🫁 Detailed Air Quality</h2>
+                <p>Comprehensive pollutant analysis and health guidance</p>
+            </div>
+            <div class="aqi-extended-grid" id="aqi-extended-container">
+                <div class="loading-placeholder">Loading air quality data...</div>
+            </div>
         </div>
 
         <!-- Error State -->
@@ -862,21 +1160,35 @@
                 const hourlyUrl = `${API_BASE_URL}/hourly?lat=${lat}&lon=${lon}`;
                 const forecastUrl = `${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}`;
                 const aqiUrl = `${API_BASE_URL}/aqi-alerts?lat=${lat}&lon=${lon}`;
+                const pollenUrl = `${API_BASE_URL}/api/v3/pollen/current?latitude=${lat}&longitude=${lon}`;
+                const marineUrl = `${API_BASE_URL}/api/v3/marine/current?latitude=${lat}&longitude=${lon}`;
+                const solarUrl = `${API_BASE_URL}/api/v3/solar/current?latitude=${lat}&longitude=${lon}`;
+                const aqiExtendedUrl = `${API_BASE_URL}/api/v3/air-quality/current?latitude=${lat}&longitude=${lon}`;
                 
-                console.log('API calls:', { weatherUrl, hourlyUrl, forecastUrl, aqiUrl });
+                console.log('API calls:', { weatherUrl, hourlyUrl, forecastUrl, aqiUrl, pollenUrl, marineUrl, solarUrl, aqiExtendedUrl });
 
-                const [weatherRes, hourlyRes, forecastRes, aqiRes] = await Promise.all([
+                const [weatherRes, hourlyRes, forecastRes, aqiRes, pollenRes, marineRes, solarRes, aqiExtendedRes] = await Promise.all([
                     fetchWithRetry(weatherUrl),
                     fetchWithRetry(hourlyUrl),
                     fetchWithRetry(forecastUrl),
-                    fetchWithRetry(aqiUrl)
+                    fetchWithRetry(aqiUrl),
+                    fetchWithRetry(pollenUrl).catch(e => ({ ok: false, error: e })),
+                    fetchWithRetry(marineUrl).catch(e => ({ ok: false, error: e })),
+                    fetchWithRetry(solarUrl).catch(e => ({ ok: false, error: e })),
+                    fetchWithRetry(aqiExtendedUrl).catch(e => ({ ok: false, error: e }))
                 ]);
 
                 const [weather, hourly, forecast, aqi] = await Promise.all([
                     weatherRes.json(), hourlyRes.json(), forecastRes.json(), aqiRes.json()
                 ]);
 
-                console.log('Weather data received:', { weather, hourly: hourly.slice(0, 3), forecast: forecast.slice(0, 3) });
+                // Handle Level 2 features with error handling
+                const pollen = pollenRes.ok ? await pollenRes.json() : null;
+                const marine = marineRes.ok ? await marineRes.json() : null;
+                const solar = solarRes.ok ? await solarRes.json() : null;
+                const aqiExtended = aqiExtendedRes.ok ? await aqiExtendedRes.json() : null;
+
+                console.log('Weather data received:', { weather, hourly: hourly.slice(0, 3), forecast: forecast.slice(0, 3), pollen, marine, solar, aqiExtended });
 
                 currentLat = lat;
                 currentLon = lon;
@@ -886,6 +1198,10 @@
                 updateHourlyForecast(hourly);
                 updateDailyForecast(forecast);
                 updateAQI(aqi);
+                updatePollenData(pollen);
+                updateMarineData(marine);
+                updateSolarData(solar);
+                updateAQIExtended(aqiExtended);
 
                 setLoading(false);
             } catch (error) {
@@ -939,6 +1255,226 @@
             if (data?.aqi?.hourly?.us_aqi?.[0]) {
                 $('aqi').textContent = data.aqi.hourly.us_aqi[0];
             }
+        }
+
+        function updatePollenData(data) {
+            const container = $('pollen-container');
+            if (!data || data.error) {
+                container.innerHTML = `
+                    <div class="loading-placeholder">
+                        ${data?.error || 'Pollen data not available for this location'}
+                    </div>
+                `;
+                return;
+            }
+
+            const levels = data.pollen_levels || {};
+            const pollenTypes = [
+                { key: 'tree', icon: '🌳', name: 'Tree Pollen', level: levels.tree_pollen || 0 },
+                { key: 'grass', icon: '🌾', name: 'Grass Pollen', level: levels.grass_pollen || 0 },
+                { key: 'weed', icon: '🌿', name: 'Weed Pollen', level: levels.weed_pollen || 0 }
+            ];
+
+            container.innerHTML = pollenTypes.map((pollen, i) => {
+                const levelClass = pollen.level < 3 ? 'low' : pollen.level < 6 ? 'moderate' : pollen.level < 9 ? 'high' : 'very-high';
+                const levelText = pollen.level < 3 ? 'Low' : pollen.level < 6 ? 'Moderate' : pollen.level < 9 ? 'High' : 'Very High';
+                const guidance = getPollenGuidance(pollen.level);
+                
+                return `
+                    <div class="pollen-card" style="animation-delay: ${i * 0.1}s">
+                        <h3>
+                            ${pollen.icon} ${pollen.name}
+                            <span class="pollen-level ${levelClass}">${levelText}</span>
+                        </h3>
+                        <div style="font-size: 2rem; text-align: center; margin: 1rem 0;">
+                            Level: ${pollen.level}/12
+                        </div>
+                        <div class="pollen-detail">
+                            <p><strong>Risk Score:</strong> ${data.risk_score || 'N/A'}/10</p>
+                            <p style="margin-top: 0.5rem;">${guidance}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (data.recommendations) {
+                container.innerHTML += `
+                    <div class="pollen-card" style="grid-column: 1/-1; background: linear-gradient(145deg, rgba(212, 175, 55, 0.08), rgba(123, 67, 151, 0.08));">
+                        <h3>💡 Allergy Recommendations</h3>
+                        <div class="pollen-detail">
+                            <p>${data.recommendations}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function getPollenGuidance(level) {
+            if (level < 3) return '✅ Safe for most people. Minimal allergy risk.';
+            if (level < 6) return '⚠️ Sensitive individuals may experience symptoms.';
+            if (level < 9) return '🚨 High risk. Take precautions if you have allergies.';
+            return '🔴 Very high risk. Avoid outdoor activities if allergic.';
+        }
+
+        function updateMarineData(data) {
+            const container = $('marine-container');
+            if (!data || data.error) {
+                container.innerHTML = `
+                    <div class="loading-placeholder">
+                        ${data?.error || 'Marine data not available for this location (coastal areas only)'}
+                    </div>
+                `;
+                return;
+            }
+
+            const current = data.current || {};
+            const marineStats = [
+                { label: '🌊 Wave Height', value: `${current.wave_height || 'N/A'} m` },
+                { label: '🌀 Swell Height', value: `${current.swell_height || 'N/A'} m` },
+                { label: '🌡️ Sea Temperature', value: `${current.sea_temp || 'N/A'} °C` },
+                { label: '💨 Coastal Wind', value: `${current.coastal_wind || 'N/A'} m/s` },
+                { label: '🌊 Wave Direction', value: current.wave_direction || 'N/A' },
+                { label: '⏱️ Wave Period', value: `${current.wave_period || 'N/A'} s` }
+            ];
+
+            container.innerHTML = `
+                <div class="marine-card">
+                    <h3 style="margin-bottom: 1rem; color: #2563eb;">🌊 Current Marine Conditions</h3>
+                    ${marineStats.map(stat => `
+                        <div class="marine-stat">
+                            <label>${stat.label}</label>
+                            <value>${stat.value}</value>
+                        </div>
+                    `).join('')}
+                </div>
+                ${data.safety_status ? `
+                    <div class="marine-card" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.08), rgba(52, 211, 153, 0.08)); border-color: rgba(16, 185, 129, 0.3);">
+                        <h3 style="margin-bottom: 1rem;">⚓ Safety Status</h3>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">${data.safety_status}</p>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function updateSolarData(data) {
+            const container = $('solar-container');
+            if (!data || data.error) {
+                container.innerHTML = `
+                    <div class="loading-placeholder">
+                        ${data?.error || 'Solar data not available'}
+                    </div>
+                `;
+                return;
+            }
+
+            const current = data.current || {};
+            container.innerHTML = `
+                <div class="solar-card">
+                    <div class="solar-metric">
+                        <h4>☀️ Solar Irradiance</h4>
+                        <div>
+                            <span class="value">${current.solar_irradiance?.toFixed(1) || 'N/A'}</span>
+                            <span class="unit">W/m²</span>
+                        </div>
+                    </div>
+                    <div class="solar-metric">
+                        <h4>⚡ PV Power Potential</h4>
+                        <div>
+                            <span class="value">${current.pv_power?.toFixed(2) || 'N/A'}</span>
+                            <span class="unit">kWh/kWp</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="solar-card">
+                    <div class="solar-metric">
+                        <h4>🌅 Sun Elevation</h4>
+                        <div>
+                            <span class="value">${current.sun_elevation?.toFixed(1) || 'N/A'}</span>
+                            <span class="unit">degrees</span>
+                        </div>
+                    </div>
+                    <div class="solar-metric">
+                        <h4>🌤️ Cloud Adjusted Radiation</h4>
+                        <div>
+                            <span class="value">${current.cloud_adjusted?.toFixed(1) || 'N/A'}</span>
+                            <span class="unit">W/m²</span>
+                        </div>
+                    </div>
+                </div>
+                ${data.energy_forecast ? `
+                    <div class="solar-card" style="grid-column: 1/-1; background: linear-gradient(145deg, rgba(251, 191, 36, 0.15), rgba(252, 211, 77, 0.15)); border-color: rgba(251, 191, 36, 0.4);">
+                        <h3 style="margin-bottom: 1rem;">📊 Energy Forecast</h3>
+                        <p style="color: var(--text-secondary); line-height: 1.6;">${data.energy_forecast}</p>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function updateAQIExtended(data) {
+            const container = $('aqi-extended-container');
+            if (!data || data.error) {
+                container.innerHTML = `
+                    <div class="loading-placeholder">
+                        ${data?.error || 'Extended air quality data not available'}
+                    </div>
+                `;
+                return;
+            }
+
+            const current = data.current || {};
+            const aqi = current.us_aqi || 0;
+            const category = getAQICategory(aqi);
+            
+            const pollutants = [
+                { name: 'PM1', value: current.pm1, unit: 'µg/m³', icon: '🔬' },
+                { name: 'PM2.5', value: current.pm2_5, unit: 'µg/m³', icon: '🌫️' },
+                { name: 'PM10', value: current.pm10, unit: 'µg/m³', icon: '💨' },
+                { name: 'NO₂', value: current.nitrogen_dioxide, unit: 'µg/m³', icon: '🏭' },
+                { name: 'SO₂', value: current.sulphur_dioxide, unit: 'µg/m³', icon: '⚗️' },
+                { name: 'CO', value: current.carbon_monoxide, unit: 'mg/m³', icon: '🚗' },
+                { name: 'O₃', value: current.ozone, unit: 'µg/m³', icon: '☀️' }
+            ];
+
+            container.innerHTML = `
+                <div class="aqi-summary">
+                    <h3 style="color: var(--text-secondary); margin-bottom: 0.5rem;">Overall Air Quality Index</h3>
+                    <div class="aqi-value" style="color: ${category.color}">${aqi}</div>
+                    <span class="aqi-category ${category.class}">${category.name}</span>
+                    ${data.health_guidance ? `
+                        <p style="margin-top: 1.5rem; color: var(--text-secondary); max-width: 600px; margin-left: auto; margin-right: auto;">
+                            ${data.health_guidance}
+                        </p>
+                    ` : ''}
+                </div>
+                <div class="pollutant-grid">
+                    ${pollutants.map((p, i) => `
+                        <div class="pollutant-card" style="animation-delay: ${i * 0.05}s">
+                            <h4>${p.icon} ${p.name}</h4>
+                            <div>
+                                <span class="value">${p.value?.toFixed(1) || 'N/A'}</span>
+                                <span class="unit">${p.unit}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                ${current.exposure_score ? `
+                    <div style="margin-top: 1.5rem; padding: 1.5rem; background: var(--item-bg); border-radius: var(--radius-lg); text-align: center;">
+                        <h4 style="color: var(--text-muted); margin-bottom: 0.5rem;">Exposure Risk Score</h4>
+                        <div style="font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 600; color: var(--text-primary);">
+                            ${current.exposure_score}/10
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function getAQICategory(aqi) {
+            if (aqi <= 50) return { name: 'Good', class: 'good', color: '#059669' };
+            if (aqi <= 100) return { name: 'Moderate', class: 'moderate', color: '#d97706' };
+            if (aqi <= 150) return { name: 'Unhealthy for Sensitive Groups', class: 'unhealthy-sensitive', color: '#ea580c' };
+            if (aqi <= 200) return { name: 'Unhealthy', class: 'unhealthy', color: '#dc2626' };
+            if (aqi <= 300) return { name: 'Very Unhealthy', class: 'very-unhealthy', color: '#c026d3' };
+            return { name: 'Hazardous', class: 'hazardous', color: '#7c3aed' };
         }
 
         function retryFetch() {

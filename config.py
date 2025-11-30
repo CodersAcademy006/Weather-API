@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # Application settings
     APP_NAME: str = "IntelliWeather"
-    APP_VERSION: str = "2.0.0"
+    APP_VERSION: str = "3.0.0"
     APP_HOST: str = "0.0.0.0"
     APP_PORT: int = 8000
     DEBUG: bool = False
@@ -111,6 +111,27 @@ class Settings(BaseSettings):
     FEATURE_I18N: bool = True  # Multi-language support
     FEATURE_API_KEYS: bool = True  # API key management
     FEATURE_ML_PREDICTION: bool = True  # ML temperature prediction
+    
+    # ==================== PHASE 3 FEATURE FLAGS (LEVEL 1) ====================
+    
+    # Advanced Forecasting
+    FEATURE_NOWCAST: bool = True  # 0-2 hour high-resolution forecast
+    FEATURE_EXTENDED_HOURLY: bool = True  # Up to 168 hours
+    FEATURE_EXTENDED_DAILY: bool = True  # Up to 16 days
+    FEATURE_HYBRID_FORECAST: bool = True  # Multi-source blending
+    
+    # Weather Insights
+    FEATURE_HEAT_INDEX: bool = True  # Heat index calculation
+    FEATURE_WIND_CHILL: bool = True  # Wind chill calculation
+    FEATURE_FIRE_RISK: bool = True  # Fire risk scoring
+    FEATURE_UV_EXPOSURE: bool = True  # UV exposure assessment
+    FEATURE_TRAVEL_DISRUPTION: bool = True  # Travel disruption risk
+    FEATURE_COMFORT_INDEX: bool = True  # Comfort scoring
+    
+    # Geocoding V2
+    FEATURE_AUTOCOMPLETE: bool = True  # Location autocomplete
+    FEATURE_NEARBY_CITIES: bool = True  # Nearby cities finder
+    FEATURE_POPULAR_LOCATIONS: bool = True  # Popular locations cache
     
     # Alerts configuration
     ALERTS_PREFETCH_INTERVAL_HOURS: int = 6
