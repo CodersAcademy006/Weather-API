@@ -71,6 +71,11 @@ class Settings(BaseSettings):
     OPEN_METEO_HISTORICAL_URL: str = "https://archive-api.open-meteo.com/v1/archive"
     GEOCODING_API_URL: str = "https://geocoding-api.open-meteo.com/v1/search"
     
+    # Fallback API (WeatherAPI.com)
+    WEATHERAPI_KEY: str = "61375c6bfef242ffac1133310241109"
+    WEATHERAPI_URL: str = "https://api.weatherapi.com/v1/forecast.json"
+    ENABLE_FALLBACK: bool = True  # Enable fallback to WeatherAPI.com
+    
     # Popular locations to pre-cache (lat, lon, name)
     POPULAR_LOCATIONS: List[str] = [
         "40.7128,-74.0060,New York",

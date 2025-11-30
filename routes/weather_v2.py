@@ -29,6 +29,130 @@ from schemas.weather import (
 
 logger = get_logger(__name__)
 
+
+def fetch_weatherapi_fallback(lat: float, lon: float, days: int = 1) -> dict:
+    """Fetch weather data from WeatherAPI.com as fallback."""
+    try:
+        params = {
+            "key": settings.WEATHERAPI_KEY,
+            "q": f"{lat},{lon}",
+            "days": min(days, 14),  # WeatherAPI supports up to 14 days
+            "aqi": "yes",
+            "alerts": "yes"
+        }
+        
+        response = requests.get(
+            settings.WEATHERAPI_URL,
+            params=params,
+            timeout=10
+        )
+        
+        if response.status_code != 200:
+            logger.error(f"WeatherAPI fallback failed with status {response.status_code}")
+            return None
+        
+        logger.info(f"Successfully fetched data from WeatherAPI.com fallback for {lat},{lon}")
+        return response.json()
+        
+    except Exception as e:
+        logger.error(f"WeatherAPI fallback error: {e}")
+        return None
+
+
+def convert_weatherapi_to_hourly(weatherapi_data: dict, hours: int) -> dict:
+    """Convert WeatherAPI.com response to our hourly format."""
+    try:
+        forecast = weatherapi_data.get("forecast", {}).get("forecastday", [])
+        hourly_data = []
+        
+        for day in forecast:
+            for hour in day.get("hour", []):
+                if len(hourly_data) >= hours:
+                    break
+                hourly_data.append({
+                    "time": hour.get("time"),
+                    "temperature_2m": hour.get("temp_c"),
+                    "apparent_temperature": hour.get("feelslike_c"),
+                    "relative_humidity_2m": hour.get("humidity"),
+                    "precipitation": hour.get("precip_mm"),
+                    "precipitation_probability": hour.get("chance_of_rain", 0),
+                    "wind_speed_10m": hour.get("wind_kph"),
+                    "wind_direction_10m": hour.get("wind_degree"),
+                    "cloud_cover": hour.get("cloud"),
+                    "weather_code": hour.get("condition", {}).get("code"),
+                    "uv_index": hour.get("uv"),
+                    "visibility": hour.get("vis_km") * 1000 if hour.get("vis_km") else None,
+                    "pressure_msl": hour.get("pressure_mb")
+                })
+            if len(hourly_data) >= hours:
+                break
+        
+        return {
+            "latitude": weatherapi_data.get("location", {}).get("lat"),
+            "longitude": weatherapi_data.get("location", {}).get("lon"),
+            "timezone": weatherapi_data.get("location", {}).get("tz_id", "UTC"),
+            "hourly_raw": {
+                "time": [h["time"] for h in hourly_data],
+                "temperature_2m": [h["temperature_2m"] for h in hourly_data],
+                "apparent_temperature": [h["apparent_temperature"] for h in hourly_data],
+                "relative_humidity_2m": [h["relative_humidity_2m"] for h in hourly_data],
+                "precipitation": [h["precipitation"] for h in hourly_data],
+                "precipitation_probability": [h["precipitation_probability"] for h in hourly_data],
+                "wind_speed_10m": [h["wind_speed_10m"] for h in hourly_data],
+                "wind_direction_10m": [h["wind_direction_10m"] for h in hourly_data],
+                "cloud_cover": [h["cloud_cover"] for h in hourly_data],
+                "weather_code": [h["weather_code"] for h in hourly_data],
+                "uv_index": [h["uv_index"] for h in hourly_data],
+                "visibility": [h["visibility"] for h in hourly_data],
+                "pressure_msl": [h["pressure_msl"] for h in hourly_data]
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error converting WeatherAPI data to hourly format: {e}")
+        return None
+
+
+def convert_weatherapi_to_daily(weatherapi_data: dict, days: int) -> dict:
+    """Convert WeatherAPI.com response to our daily format."""
+    try:
+        forecast = weatherapi_data.get("forecast", {}).get("forecastday", [])[:days]
+        
+        daily_data = []
+        for day in forecast:
+            daily_data.append({
+                "date": day.get("date"),
+                "temperature_2m_max": day.get("day", {}).get("maxtemp_c"),
+                "temperature_2m_min": day.get("day", {}).get("mintemp_c"),
+                "precipitation_sum": day.get("day", {}).get("totalprecip_mm"),
+                "precipitation_probability_max": day.get("day", {}).get("daily_chance_of_rain", 0),
+                "wind_speed_10m_max": day.get("day", {}).get("maxwind_kph"),
+                "weather_code": day.get("day", {}).get("condition", {}).get("code"),
+                "sunrise": day.get("astro", {}).get("sunrise"),
+                "sunset": day.get("astro", {}).get("sunset"),
+                "uv_index_max": day.get("day", {}).get("uv")
+            })
+        
+        return {
+            "latitude": weatherapi_data.get("location", {}).get("lat"),
+            "longitude": weatherapi_data.get("location", {}).get("lon"),
+            "timezone": weatherapi_data.get("location", {}).get("tz_id", "UTC"),
+            "daily_raw": {
+                "time": [d["date"] for d in daily_data],
+                "temperature_2m_max": [d["temperature_2m_max"] for d in daily_data],
+                "temperature_2m_min": [d["temperature_2m_min"] for d in daily_data],
+                "precipitation_sum": [d["precipitation_sum"] for d in daily_data],
+                "precipitation_probability_max": [d["precipitation_probability_max"] for d in daily_data],
+                "wind_speed_10m_max": [d["wind_speed_10m_max"] for d in daily_data],
+                "weather_code": [d["weather_code"] for d in daily_data],
+                "sunrise": [d["sunrise"] for d in daily_data],
+                "sunset": [d["sunset"] for d in daily_data],
+                "uv_index_max": [d["uv_index_max"] for d in daily_data]
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error converting WeatherAPI data to daily format: {e}")
+        return None
+
 router = APIRouter(
     prefix="/weather",
     tags=["Weather V2"],
@@ -111,7 +235,8 @@ async def get_hourly_forecast(
         metrics.increment("cache_misses")
         logger.info(f"CACHE MISS for hourly v2 at {lat_norm}, {lon_norm}")
         
-        # Fetch from Open-Meteo
+        # Fetch from Open-Meteo with fallback to WeatherAPI
+        data = None
         try:
             params = {
                 "latitude": lat_norm,
@@ -127,36 +252,51 @@ async def get_hourly_forecast(
                 timeout=10
             )
             
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=503,
-                    detail="Weather service temporarily unavailable"
-                )
+            if response.status_code == 200:
+                api_data = response.json()
+                hourly = api_data.get("hourly", {})
+                
+                data = {
+                    "latitude": api_data.get("latitude"),
+                    "longitude": api_data.get("longitude"),
+                    "timezone": api_data.get("timezone"),
+                    "hourly_raw": hourly
+                }
+                source = "live"
+                logger.info("Successfully fetched from Open-Meteo (primary)")
+            else:
+                raise Exception(f"Open-Meteo returned status {response.status_code}")
             
-            api_data = response.json()
-            hourly = api_data.get("hourly", {})
+        except Exception as e:
+            logger.warning(f"Primary API (Open-Meteo) failed: {e}")
             
-            data = {
-                "latitude": api_data.get("latitude"),
-                "longitude": api_data.get("longitude"),
-                "timezone": api_data.get("timezone"),
-                "hourly_raw": hourly
-            }
-            
-            cache.set(cache_key, data, ttl=1800)  # 30 min cache
-            source = "live"
-            
-        except requests.exceptions.Timeout:
+            # Try fallback to WeatherAPI.com
+            if settings.ENABLE_FALLBACK and not data:
+                logger.info("Attempting fallback to WeatherAPI.com")
+                metrics.increment("fallback_attempts")
+                
+                weatherapi_data = fetch_weatherapi_fallback(lat_norm, lon_norm, days=(hours // 24) + 1)
+                if weatherapi_data:
+                    data = convert_weatherapi_to_hourly(weatherapi_data, hours)
+                    if data:
+                        source = "fallback"
+                        metrics.increment("fallback_successes")
+                        logger.info("Successfully used WeatherAPI.com fallback")
+                    else:
+                        metrics.increment("fallback_failures")
+                else:
+                    metrics.increment("fallback_failures")
+        
+        # If both primary and fallback failed
+        if not data:
+            logger.error("Both primary and fallback APIs failed")
             raise HTTPException(
                 status_code=503,
-                detail="Weather service timeout. Please try again."
+                detail="Weather service unavailable. Please try again later."
             )
-        except requests.exceptions.RequestException as e:
-            logger.error(f"API request failed: {e}")
-            raise HTTPException(
-                status_code=503,
-                detail="Weather service unavailable"
-            )
+        
+        # Cache the result
+        cache.set(cache_key, data, ttl=1800)  # 30 min cache
     
     # Process data
     hourly_raw = data.get("hourly_raw", {})
@@ -240,6 +380,7 @@ async def get_daily_forecast(
         metrics.increment("cache_misses")
         logger.info(f"CACHE MISS for daily v2 at {lat_norm}, {lon_norm}")
         
+        data = None
         try:
             params = {
                 "latitude": lat_norm,
@@ -255,36 +396,51 @@ async def get_daily_forecast(
                 timeout=10
             )
             
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=503,
-                    detail="Weather service temporarily unavailable"
-                )
+            if response.status_code == 200:
+                api_data = response.json()
+                daily = api_data.get("daily", {})
+                
+                data = {
+                    "latitude": api_data.get("latitude"),
+                    "longitude": api_data.get("longitude"),
+                    "timezone": api_data.get("timezone"),
+                    "daily_raw": daily
+                }
+                source = "live"
+                logger.info("Successfully fetched from Open-Meteo (primary)")
+            else:
+                raise Exception(f"Open-Meteo returned status {response.status_code}")
             
-            api_data = response.json()
-            daily = api_data.get("daily", {})
+        except Exception as e:
+            logger.warning(f"Primary API (Open-Meteo) failed: {e}")
             
-            data = {
-                "latitude": api_data.get("latitude"),
-                "longitude": api_data.get("longitude"),
-                "timezone": api_data.get("timezone"),
-                "daily_raw": daily
-            }
-            
-            cache.set(cache_key, data, ttl=3600)  # 1 hour cache
-            source = "live"
-            
-        except requests.exceptions.Timeout:
+            # Try fallback to WeatherAPI.com
+            if settings.ENABLE_FALLBACK and not data:
+                logger.info("Attempting fallback to WeatherAPI.com")
+                metrics.increment("fallback_attempts")
+                
+                weatherapi_data = fetch_weatherapi_fallback(lat_norm, lon_norm, days=days)
+                if weatherapi_data:
+                    data = convert_weatherapi_to_daily(weatherapi_data, days)
+                    if data:
+                        source = "fallback"
+                        metrics.increment("fallback_successes")
+                        logger.info("Successfully used WeatherAPI.com fallback")
+                    else:
+                        metrics.increment("fallback_failures")
+                else:
+                    metrics.increment("fallback_failures")
+        
+        # If both primary and fallback failed
+        if not data:
+            logger.error("Both primary and fallback APIs failed")
             raise HTTPException(
                 status_code=503,
-                detail="Weather service timeout. Please try again."
+                detail="Weather service unavailable. Please try again later."
             )
-        except requests.exceptions.RequestException as e:
-            logger.error(f"API request failed: {e}")
-            raise HTTPException(
-                status_code=503,
-                detail="Weather service unavailable"
-            )
+        
+        # Cache the result
+        cache.set(cache_key, data, ttl=3600)  # 1 hour cache
     
     # Process data
     daily_raw = data.get("daily_raw", {})

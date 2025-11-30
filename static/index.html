@@ -854,19 +854,29 @@
         // ==================== DATA FETCHING ====================
         async function fetchAllWeatherData(lat, lon, locationName) {
             try {
+                console.log(`Fetching weather for: ${locationName} (${lat}, ${lon})`);
                 setLoading(true, 'Fetching weather data...');
                 errorState.style.display = 'none';
 
+                const weatherUrl = `${API_BASE_URL}/weather?lat=${lat}&lon=${lon}`;
+                const hourlyUrl = `${API_BASE_URL}/hourly?lat=${lat}&lon=${lon}`;
+                const forecastUrl = `${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}`;
+                const aqiUrl = `${API_BASE_URL}/aqi-alerts?lat=${lat}&lon=${lon}`;
+                
+                console.log('API calls:', { weatherUrl, hourlyUrl, forecastUrl, aqiUrl });
+
                 const [weatherRes, hourlyRes, forecastRes, aqiRes] = await Promise.all([
-                    fetchWithRetry(`${API_BASE_URL}/weather?lat=${lat}&lon=${lon}`),
-                    fetchWithRetry(`${API_BASE_URL}/hourly?lat=${lat}&lon=${lon}`),
-                    fetchWithRetry(`${API_BASE_URL}/forecast?lat=${lat}&lon=${lon}`),
-                    fetchWithRetry(`${API_BASE_URL}/aqi-alerts?lat=${lat}&lon=${lon}`)
+                    fetchWithRetry(weatherUrl),
+                    fetchWithRetry(hourlyUrl),
+                    fetchWithRetry(forecastUrl),
+                    fetchWithRetry(aqiUrl)
                 ]);
 
                 const [weather, hourly, forecast, aqi] = await Promise.all([
                     weatherRes.json(), hourlyRes.json(), forecastRes.json(), aqiRes.json()
                 ]);
+
+                console.log('Weather data received:', { weather, hourly: hourly.slice(0, 3), forecast: forecast.slice(0, 3) });
 
                 currentLat = lat;
                 currentLon = lon;
@@ -1000,12 +1010,35 @@
             setLoading(true, 'Getting your location...');
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    pos => fetchAllWeatherData(pos.coords.latitude.toFixed(2), pos.coords.longitude.toFixed(2), "Your Current Location"),
-                    () => fetchAllWeatherData(40.71, -74.01, "New York"),
-                    { timeout: 10000, maximumAge: 300000 }
+                    pos => {
+                        console.log('Geolocation success:', pos.coords.latitude, pos.coords.longitude);
+                        fetchAllWeatherData(
+                            pos.coords.latitude, 
+                            pos.coords.longitude, 
+                            "Your Current Location"
+                        );
+                    },
+                    error => {
+                        console.warn('Geolocation failed:', error.message, 'Code:', error.code);
+                        // Show user-friendly message based on error
+                        let errorMsg = 'New York (Default)';
+                        if (error.code === 1) {
+                            console.log('Location permission denied - using default location');
+                            alert('📍 Location access denied. Using New York as default.\n\nTo use your location:\n1. Click the lock/info icon in your browser address bar\n2. Allow location access\n3. Refresh the page');
+                        } else if (error.code === 2) {
+                            console.log('Location unavailable - using default location');
+                        } else if (error.code === 3) {
+                            console.log('Location timeout - using default location');
+                            alert('📍 Location request timed out. Using New York as default.\n\nPlease check your internet connection and try again.');
+                        }
+                        fetchAllWeatherData(40.71, -74.01, errorMsg);
+                    },
+                    { timeout: 15000, maximumAge: 0, enableHighAccuracy: false }
                 );
             } else {
-                fetchAllWeatherData(40.71, -74.01, "New York");
+                console.log('Geolocation not supported - using default location');
+                alert('📍 Your browser doesn\'t support geolocation. Using New York as default.');
+                fetchAllWeatherData(40.71, -74.01, "New York (Default)");
             }
         }
 

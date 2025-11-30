@@ -250,7 +250,7 @@ def save_weather_to_db(data_rows: list) -> None:
 
 
 def fetch_live_weather(lat: float, lon: float) -> Optional[dict]:
-    """Fetch live weather from Open-Meteo API."""
+    """Fetch live weather from Open-Meteo API with fallback to WeatherAPI.com."""
     try:
         api_url = settings.OPEN_METEO_API_URL
         params = {
@@ -260,27 +260,61 @@ def fetch_live_weather(lat: float, lon: float) -> Optional[dict]:
             "timezone": "auto"
         }
         response = requests.get(api_url, params=params, timeout=10)
-        if response.status_code != 200:
-            logger.error(f"Open-Meteo API error: {response.status_code}")
-            return None
-        raw = response.json()['current']
-        return {
-            "location_name": f"Lat_{lat}_Lon_{lon}",
-            "latitude": lat,
-            "longitude": lon,
-            "timestamp": datetime.fromisoformat(raw['time']),
-            "temperature_c": raw['temperature_2m'],
-            "humidity_pct": raw['relative_humidity_2m'],
-            "pressure_hpa": raw['pressure_msl'],
-            "wind_speed_mps": round(raw['wind_speed_10m'] / 3.6, 2),
-            "precip_mm": raw['precipitation'],
-            "weather_code": raw['weather_code'],
-            "apparent_temperature": raw['apparent_temperature'],
-            "uv_index": raw['uv_index'],
-            "is_day": raw['is_day']
-        }
+        if response.status_code == 200:
+            raw = response.json()['current']
+            return {
+                "location_name": f"Lat_{lat}_Lon_{lon}",
+                "latitude": lat,
+                "longitude": lon,
+                "timestamp": datetime.fromisoformat(raw['time']),
+                "temperature_c": raw['temperature_2m'],
+                "humidity_pct": raw['relative_humidity_2m'],
+                "pressure_hpa": raw['pressure_msl'],
+                "wind_speed_mps": round(raw['wind_speed_10m'] / 3.6, 2),
+                "precip_mm": raw['precipitation'],
+                "weather_code": raw['weather_code'],
+                "apparent_temperature": raw['apparent_temperature'],
+                "uv_index": raw['uv_index'],
+                "is_day": raw['is_day']
+            }
+        else:
+            raise Exception(f"Open-Meteo returned status {response.status_code}")
     except Exception as e:
-        logger.error(f"Failed to fetch live weather: {e}")
+        logger.warning(f"Primary API (Open-Meteo) failed for current weather: {e}")
+        
+        # Try fallback to WeatherAPI.com
+        if settings.ENABLE_FALLBACK:
+            try:
+                logger.info("Attempting fallback to WeatherAPI.com for current weather")
+                params = {
+                    "key": settings.WEATHERAPI_KEY,
+                    "q": f"{lat},{lon}",
+                    "aqi": "yes"
+                }
+                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    current = data.get("current", {})
+                    logger.info("Successfully used WeatherAPI.com fallback for current weather")
+                    return {
+                        "location_name": data.get("location", {}).get("name", f"Lat_{lat}_Lon_{lon}"),
+                        "latitude": lat,
+                        "longitude": lon,
+                        "timestamp": datetime.fromisoformat(current.get("last_updated", datetime.now(timezone.utc).isoformat())),
+                        "temperature_c": current.get("temp_c", 0),
+                        "humidity_pct": current.get("humidity", 0),
+                        "pressure_hpa": current.get("pressure_mb", 0),
+                        "wind_speed_mps": round(current.get("wind_kph", 0) / 3.6, 2),
+                        "precip_mm": current.get("precip_mm", 0),
+                        "weather_code": current.get("condition", {}).get("code", 0),
+                        "apparent_temperature": current.get("feelslike_c", current.get("temp_c", 0)),
+                        "uv_index": current.get("uv", 0),
+                        "is_day": current.get("is_day", 1)
+                    }
+            except Exception as fallback_error:
+                logger.error(f"WeatherAPI.com fallback also failed: {fallback_error}")
+        
+        logger.error("All weather APIs failed")
         return None
 
 
@@ -323,7 +357,7 @@ def save_hourly_forecast_to_db(lat: float, lon: float, forecast_data: list) -> N
 
 
 def fetch_hourly_forecast(lat: float, lon: float) -> Optional[list]:
-    """Fetch hourly forecast from Open-Meteo API."""
+    """Fetch hourly forecast from Open-Meteo API with fallback to WeatherAPI.com."""
     try:
         api_url = settings.OPEN_METEO_API_URL
         params = {
@@ -334,20 +368,56 @@ def fetch_hourly_forecast(lat: float, lon: float) -> Optional[list]:
             "timezone": "auto"
         }
         response = requests.get(api_url, params=params, timeout=10)
-        if response.status_code != 200:
-            return None
-        raw = response.json()['hourly']
-        return [
-            {
-                "time": raw['time'][i],
-                "temp": raw['temperature_2m'][i],
-                "precip_prob": raw['precipitation_probability'][i],
-                "wind": round(raw['wind_speed_10m'][i] / 3.6, 2),
-                "cloud_cover": raw['cloud_cover'][i],
-                "weather_code": raw['weather_code'][i]
-            }
-            for i in range(len(raw['time']))
-        ]
+        if response.status_code == 200:
+            raw = response.json()['hourly']
+            return [
+                {
+                    "time": raw['time'][i],
+                    "temp": raw['temperature_2m'][i],
+                    "precip_prob": raw['precipitation_probability'][i],
+                    "wind": round(raw['wind_speed_10m'][i] / 3.6, 2),
+                    "cloud_cover": raw['cloud_cover'][i],
+                    "weather_code": raw['weather_code'][i]
+                }
+                for i in range(len(raw['time']))
+            ]
+        else:
+            raise Exception(f"Open-Meteo returned status {response.status_code}")
+    except Exception as e:
+        logger.warning(f"Primary API (Open-Meteo) failed for hourly forecast: {e}")
+        
+        # Try fallback to WeatherAPI.com
+        if settings.ENABLE_FALLBACK:
+            try:
+                logger.info("Attempting fallback to WeatherAPI.com for hourly forecast")
+                params = {
+                    "key": settings.WEATHERAPI_KEY,
+                    "q": f"{lat},{lon}",
+                    "days": 1,
+                    "aqi": "no"
+                }
+                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    forecast = data.get("forecast", {}).get("forecastday", [])
+                    hourly_data = []
+                    for day in forecast:
+                        for hour in day.get("hour", []):
+                            hourly_data.append({
+                                "time": hour.get("time"),
+                                "temp": hour.get("temp_c"),
+                                "precip_prob": hour.get("chance_of_rain", 0),
+                                "wind": round(hour.get("wind_kph", 0) / 3.6, 2),
+                                "cloud_cover": hour.get("cloud", 0),
+                                "weather_code": hour.get("condition", {}).get("code", 0)
+                            })
+                    logger.info("Successfully used WeatherAPI.com fallback for hourly forecast")
+                    return hourly_data
+            except Exception as fallback_error:
+                logger.error(f"WeatherAPI.com fallback also failed: {fallback_error}")
+        
+        logger.error("All hourly forecast APIs failed")
+        return None
     except Exception as e:
         logger.error(f"Failed to fetch hourly forecast: {e}")
         return None
@@ -392,7 +462,7 @@ def save_forecast_to_db(lat: float, lon: float, forecast_data: list) -> None:
 
 
 def fetch_daily_forecast(lat: float, lon: float) -> Optional[list]:
-    """Fetch daily forecast from Open-Meteo API."""
+    """Fetch daily forecast from Open-Meteo API with fallback to WeatherAPI.com."""
     try:
         api_url = settings.OPEN_METEO_API_URL
         params = {
@@ -403,22 +473,59 @@ def fetch_daily_forecast(lat: float, lon: float) -> Optional[list]:
             "timezone": "auto"
         }
         response = requests.get(api_url, params=params, timeout=10)
-        if response.status_code != 200:
-            return None
-        raw = response.json()['daily']
-        return [
-            {
-                "date": raw['time'][i],
-                "max_temp": raw['temperature_2m_max'][i],
-                "min_temp": raw['temperature_2m_min'][i],
-                "weather_code": raw['weather_code'][i],
-                "sunrise": raw['sunrise'][i],
-                "sunset": raw['sunset'][i],
-                "precipitation_sum": raw['precipitation_sum'][i],
-                "precipitation_probability_max": raw['precipitation_probability_max'][i]
-            }
-            for i in range(len(raw['time']))
-        ]
+        if response.status_code == 200:
+            raw = response.json()['daily']
+            return [
+                {
+                    "date": raw['time'][i],
+                    "max_temp": raw['temperature_2m_max'][i],
+                    "min_temp": raw['temperature_2m_min'][i],
+                    "weather_code": raw['weather_code'][i],
+                    "sunrise": raw['sunrise'][i],
+                    "sunset": raw['sunset'][i],
+                    "precipitation_sum": raw['precipitation_sum'][i],
+                    "precipitation_probability_max": raw['precipitation_probability_max'][i]
+                }
+                for i in range(len(raw['time']))
+            ]
+        else:
+            raise Exception(f"Open-Meteo returned status {response.status_code}")
+    except Exception as e:
+        logger.warning(f"Primary API (Open-Meteo) failed for daily forecast: {e}")
+        
+        # Try fallback to WeatherAPI.com
+        if settings.ENABLE_FALLBACK:
+            try:
+                logger.info("Attempting fallback to WeatherAPI.com for daily forecast")
+                params = {
+                    "key": settings.WEATHERAPI_KEY,
+                    "q": f"{lat},{lon}",
+                    "days": 7,
+                    "aqi": "no"
+                }
+                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    forecast = data.get("forecast", {}).get("forecastday", [])
+                    daily_data = []
+                    for day in forecast:
+                        daily_data.append({
+                            "date": day.get("date"),
+                            "max_temp": day.get("day", {}).get("maxtemp_c"),
+                            "min_temp": day.get("day", {}).get("mintemp_c"),
+                            "weather_code": day.get("day", {}).get("condition", {}).get("code", 0),
+                            "sunrise": day.get("astro", {}).get("sunrise"),
+                            "sunset": day.get("astro", {}).get("sunset"),
+                            "precipitation_sum": day.get("day", {}).get("totalprecip_mm"),
+                            "precipitation_probability_max": day.get("day", {}).get("daily_chance_of_rain", 0)
+                        })
+                    logger.info("Successfully used WeatherAPI.com fallback for daily forecast")
+                    return daily_data
+            except Exception as fallback_error:
+                logger.error(f"WeatherAPI.com fallback also failed: {fallback_error}")
+        
+        logger.error("All daily forecast APIs failed")
+        return None
     except Exception as e:
         logger.error(f"Failed to fetch daily forecast: {e}")
         return None
