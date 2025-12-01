@@ -22,8 +22,23 @@ from session_middleware import (
 )
 from config import settings
 from logging_config import get_logger
+from authlib.integrations.starlette_client import OAuth
+from fastapi.responses import RedirectResponse
+import secrets
 
 logger = get_logger(__name__)
+
+# Google OAuth setup
+oauth = OAuth()
+oauth.register(
+    name='google',
+    client_id=settings.GOOGLE_CLIENT_ID,
+    client_secret=settings.GOOGLE_CLIENT_SECRET,
+    server_metadata_url='https://accounts.google.com/.well-known/openid_configuration',
+    client_kwargs={
+        'scope': 'openid email profile'
+    }
+)
 
 # Password hashing context
 try:
@@ -38,6 +53,104 @@ except Exception as e:
 
 # Router
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+# ==================== TEST HELPER ====================
+
+@router.post("/create-test-users")
+async def create_test_users():
+    """Create test users with known passwords for debugging."""
+    storage = get_storage()
+    
+    test_users = [
+        {"username": "admin", "email": "admin@test.com", "password": "Admin123!"},
+        {"username": "user", "email": "user@test.com", "password": "User123!"},
+        {"username": "demo", "email": "demo@test.com", "password": "Demo123!"}
+    ]
+    
+    created = []
+    for user_data in test_users:
+        # Check if already exists
+        existing = storage.get_user_by_email(user_data["email"])
+        if not existing:
+            hashed_password = hash_password(user_data["password"])
+            user = User.create(
+                username=user_data["username"],
+                email=user_data["email"], 
+                hashed_password=hashed_password
+            )
+            storage.create_user(user)
+            created.append(user_data["username"])
+    
+    return {"created_users": created, "test_credentials": [
+        "admin@test.com / Admin123!",
+        "user@test.com / User123!", 
+        "demo@test.com / Demo123!"
+    ]}
+
+
+# ==================== GOOGLE OAUTH ====================
+
+@router.get("/google")
+async def google_login(request: Request):
+    """Redirect to Google OAuth."""
+    redirect_uri = settings.GOOGLE_REDIRECT_URI
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+
+@router.get("/google/callback")
+async def google_callback(request: Request, response: Response):
+    """Handle Google OAuth callback."""
+    try:
+        token = await oauth.google.authorize_access_token(request)
+        user_info = token.get('userinfo')
+        
+        if not user_info:
+            raise HTTPException(status_code=400, detail="Failed to get user info from Google")
+        
+        email = user_info.get('email')
+        name = user_info.get('name', email.split('@')[0])
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not provided by Google")
+        
+        storage = get_storage()
+        
+        # Check if user exists
+        user = storage.get_user_by_email(email)
+        
+        if not user:
+            # Create new user
+            username = name.lower().replace(' ', '_')[:50]
+            
+            # Make username unique if it exists
+            counter = 1
+            original_username = username
+            while storage.get_user_by_username(username):
+                username = f"{original_username}_{counter}"
+                counter += 1
+            
+            user = User.create(
+                username=username,
+                email=email,
+                hashed_password="google_oauth"  # No password for OAuth users
+            )
+            storage.create_user(user)
+            logger.info(f"Created new Google OAuth user: {email}")
+        
+        # Create session
+        session_middleware = get_session_middleware()
+        if session_middleware:
+            session_middleware.create_session(user.user_id, response)
+        
+        logger.info(f"Google OAuth login successful: {email}")
+        
+        # Redirect to dashboard or home page
+        return RedirectResponse(url="/weather-dashboard.html")
+        
+    except Exception as e:
+        logger.error(f"Google OAuth error: {e}")
+        raise HTTPException(status_code=400, detail=f"OAuth authentication failed: {str(e)}")
 
 
 # ==================== PYDANTIC MODELS ====================

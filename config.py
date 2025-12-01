@@ -64,6 +64,20 @@ class Settings(BaseSettings):
     
     # Database
     DB_CONNECTION_STRING: Optional[str] = None
+    DATABASE_URL: Optional[str] = None
+    
+    # PostgreSQL settings
+    POSTGRES_ENABLED: bool = False
+    POSTGRES_HOST: str = "localhost"
+    POSTGRES_PORT: int = 5432
+    POSTGRES_DB: str = "intelliweather"
+    POSTGRES_USER: str = "intelliweather"
+    POSTGRES_PASSWORD: str = ""
+    
+    # Google OAuth
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
     
     # External APIs
     OPEN_METEO_API_URL: str = "https://api.open-meteo.com/v1/forecast"
@@ -98,6 +112,11 @@ class Settings(BaseSettings):
     # CORS settings
     CORS_ORIGINS: List[str] = ["*"]
     CORS_ALLOW_CREDENTIALS: bool = True
+    
+    # Google OAuth settings
+    GOOGLE_CLIENT_ID: str = "your-google-client-id"
+    GOOGLE_CLIENT_SECRET: str = "your-google-client-secret"
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
     
     # ==================== PHASE 2 FEATURE FLAGS ====================
     
