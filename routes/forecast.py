@@ -241,7 +241,7 @@ async def get_nowcast(
     - Sports/recreation decisions
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/forecast/nowcast", method="GET").inc()
+    metrics.increment("forecast_requests")
     
     cache_key = f"nowcast:{latitude}:{longitude}:{units}"
     cache = get_cache()
@@ -250,10 +250,10 @@ async def get_nowcast(
     cached_data = cache.get(cache_key)
     if cached_data:
         logger.info(f"Cache hit for nowcast {latitude},{longitude}")
-        metrics.cache_hits_total.labels(cache_type="nowcast").inc()
+        metrics.increment("cache_hits")
         return JSONResponse(content=cached_data)
     
-    metrics.cache_misses_total.labels(cache_type="nowcast").inc()
+    metrics.increment("cache_misses")
     
     # Fetch nowcast
     data = fetch_open_meteo_nowcast(latitude, longitude)
@@ -300,19 +300,19 @@ async def get_hourly_forecast(
     - Pressure trends
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/forecast/hourly", method="GET").inc()
+    metrics.increment("hourly_requests")
     
-    cache_key = f"hourly:{latitude}:{longitude}:{hours}:{units}:{hybrid}"
+    cache_key = f"hourly:{latitude}:{longitude}:{hours}:{units}"
     cache = get_cache()
     
     # Check cache (30-minute TTL)
     cached_data = cache.get(cache_key)
     if cached_data:
         logger.info(f"Cache hit for hourly {latitude},{longitude}")
-        metrics.cache_hits_total.labels(cache_type="hourly").inc()
+        metrics.increment("cache_hits")
         return JSONResponse(content=cached_data)
     
-    metrics.cache_misses_total.labels(cache_type="hourly").inc()
+    metrics.increment("cache_misses")
     
     # Fetch from Open-Meteo
     om_data = fetch_open_meteo_hourly(latitude, longitude, hours)
@@ -359,19 +359,19 @@ async def get_daily_forecast(
     - Snowfall accumulation
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/forecast/daily", method="GET").inc()
+    metrics.increment("forecast_requests")
     
-    cache_key = f"daily:{latitude}:{longitude}:{days}:{units}:{hybrid}"
+    cache_key = f"daily:{latitude}:{longitude}:{days}:{units}"
     cache = get_cache()
     
     # Check cache (1-hour TTL)
     cached_data = cache.get(cache_key)
     if cached_data:
         logger.info(f"Cache hit for daily {latitude},{longitude}")
-        metrics.cache_hits_total.labels(cache_type="daily").inc()
+        metrics.increment("cache_hits")
         return JSONResponse(content=cached_data)
     
-    metrics.cache_misses_total.labels(cache_type="daily").inc()
+    metrics.increment("cache_misses")
     
     # Fetch from Open-Meteo
     om_data = fetch_open_meteo_daily(latitude, longitude, days)
@@ -414,7 +414,7 @@ async def get_complete_forecast(
     One-stop solution for comprehensive weather data.
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/forecast/complete", method="GET").inc()
+    metrics.increment("forecast_requests")
     
     cache_key = f"complete:{latitude}:{longitude}:{units}"
     cache = get_cache()
@@ -423,10 +423,10 @@ async def get_complete_forecast(
     cached_data = cache.get(cache_key)
     if cached_data:
         logger.info(f"Cache hit for complete forecast {latitude},{longitude}")
-        metrics.cache_hits_total.labels(cache_type="complete").inc()
+        metrics.increment("cache_hits")
         return JSONResponse(content=cached_data)
     
-    metrics.cache_misses_total.labels(cache_type="complete").inc()
+    metrics.increment("cache_misses")
     
     # Fetch all forecasts in parallel (conceptually - synchronous for simplicity)
     nowcast = fetch_open_meteo_nowcast(latitude, longitude)

@@ -186,7 +186,7 @@ async def autocomplete_locations(
 ):
     """Autocomplete search for locations with fast response."""
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/geocode/autocomplete", method="GET").inc()
+    metrics.increment("total_requests")
     
     # Cache autocomplete results aggressively (1 hour)
     cache_key = f"autocomplete:{q.lower()}:{limit}:{types}"
@@ -195,10 +195,10 @@ async def autocomplete_locations(
     cached_data = cache.get(cache_key)
     if cached_data:
         logger.info(f"Cache hit for autocomplete: {q}")
-        metrics.cache_hits_total.labels(cache_type="autocomplete").inc()
+        metrics.increment("cache_hits")
         return JSONResponse(content=cached_data)
     
-    metrics.cache_misses_total.labels(cache_type="autocomplete").inc()
+    metrics.increment("cache_misses")
     
     # Perform search
     geocoding = get_geocoding_service()
@@ -266,7 +266,7 @@ async def get_popular_locations(
 ):
     """Get popular pre-cached locations."""
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/geocode/popular", method="GET").inc()
+    metrics.increment("total_requests")
     
     # Get popular locations from config
     popular = settings.parse_popular_locations()
@@ -316,7 +316,7 @@ async def find_nearby_cities(
 ):
     """Find cities near given coordinates."""
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/geocode/nearby", method="GET").inc()
+    metrics.increment("total_requests")
     
     cache_key = f"nearby:{lat}:{lon}:{radius_km}:{limit}"
     cache = get_cache()
@@ -324,10 +324,10 @@ async def find_nearby_cities(
     cached_data = cache.get(cache_key)
     if cached_data:
         logger.info(f"Cache hit for nearby cities: {lat},{lon}")
-        metrics.cache_hits_total.labels(cache_type="nearby").inc()
+        metrics.increment("cache_hits")
         return JSONResponse(content=cached_data)
     
-    metrics.cache_misses_total.labels(cache_type="nearby").inc()
+    metrics.increment("cache_misses")
     
     # Use geocoding service to search in area
     # This is a simplified implementation - in production, you'd use a spatial database

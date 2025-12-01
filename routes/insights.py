@@ -92,7 +92,7 @@ async def get_current_insights(
     - Comfort index
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/insights/current", method="GET").inc()
+    metrics.increment("total_requests")
     
     cache_key = f"insights:current:{latitude}:{longitude}"
     cache = get_cache()
@@ -101,10 +101,10 @@ async def get_current_insights(
     cached_data = cache.get(cache_key)
     if cached_data:
         logger.info(f"Cache hit for insights {latitude},{longitude}")
-        metrics.cache_hits_total.labels(cache_type="insights").inc()
+        metrics.increment("cache_hits")
         return JSONResponse(content=cached_data)
     
-    metrics.cache_misses_total.labels(cache_type="insights").inc()
+    metrics.increment("cache_misses")
     
     # Fetch current weather
     weather_data = fetch_current_weather(latitude, longitude)
@@ -155,7 +155,7 @@ async def get_fire_risk(
     Returns risk score 0-100 with category and recommendations.
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/insights/fire-risk", method="GET").inc()
+    metrics.increment("total_requests")
     
     # Fetch current weather
     weather_data = fetch_current_weather(latitude, longitude)
@@ -205,7 +205,7 @@ async def get_uv_exposure(
     Returns protection recommendations and burn time estimates.
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/insights/uv-exposure", method="GET").inc()
+    metrics.increment("total_requests")
     
     # Fetch current weather
     weather_data = fetch_current_weather(latitude, longitude)
@@ -250,7 +250,7 @@ async def get_travel_disruption(
     Considers weather, visibility, wind, and precipitation.
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/insights/travel-disruption", method="GET").inc()
+    metrics.increment("total_requests")
     
     # Fetch current weather
     weather_data = fetch_current_weather(latitude, longitude)
@@ -301,7 +301,7 @@ async def get_comfort_index(
     Perfect for event planning and outdoor activity recommendations.
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/insights/comfort", method="GET").inc()
+    metrics.increment("total_requests")
     
     # Fetch current weather
     weather_data = fetch_current_weather(latitude, longitude)
@@ -348,7 +348,7 @@ async def get_feels_like_temperature(
     Helps users understand what the weather actually feels like.
     """
     metrics = get_metrics()
-    metrics.api_requests_total.labels(endpoint="/api/v3/insights/feels-like", method="GET").inc()
+    metrics.increment("total_requests")
     
     # Fetch current weather
     weather_data = fetch_current_weather(latitude, longitude)
