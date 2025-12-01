@@ -86,7 +86,7 @@ async def get_current_weather(
             if cached:
                 lat = cached["lat"]
                 lon = cached["lon"]
-                location = cached["location"]
+                location = cached["location"] if not location else location
         
         if (not lat or not lon) and location:
             # Geocode the location using the geocoding service
@@ -104,25 +104,33 @@ async def get_current_weather(
         if not lat or not lon:
             raise HTTPException(status_code=400, detail="No location provided or cached")
     
+    # Set default location if still not set
+    if not location:
+        location = f"{lat:.4f}, {lon:.4f}"
+    
     # Fetch weather data using Open-Meteo API directly
     import httpx
-    async with httpx.AsyncClient() as client:
-        params = {
-            "latitude": lat,
-            "longitude": lon,
-            "current": "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",
-            "timezone": "auto"
-        }
-        response = await client.get(
-            "https://api.open-meteo.com/v1/forecast",
-            params=params,
-            timeout=10.0
-        )
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail="Failed to fetch weather data")
-        
-        weather_data = response.json()
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            params = {
+                "latitude": lat,
+                "longitude": lon,
+                "current": "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m",
+                "timezone": "auto"
+            }
+            response = await client.get(
+                "https://api.open-meteo.com/v1/forecast",
+                params=params
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(status_code=500, detail="Failed to fetch weather data")
+            
+            weather_data = response.json()
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Weather API timeout")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Weather API error: {str(e)}")
     
     return {
         "location": location or f"{lat},{lon}",
