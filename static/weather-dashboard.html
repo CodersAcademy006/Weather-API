@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard - IntelliWeather</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2563eb, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1;
+            max-width: 500px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        button {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+        }
+        
+        button.secondary:hover {
+            background: var(--border);
+        }
+        
+        .weather-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .current-weather {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .temp-display {
+            text-align: center;
+        }
+        
+        .temp-value {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .location-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .weather-desc {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+        }
+        
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        
+        .detail-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+        
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--danger);
+        }
+        
+        .success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--secondary);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+        
+        .last-updated {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 1rem;
+        }
+        
+        .auto-update {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: var(--secondary);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            h1 { font-size: 1.5rem; }
+            .temp-value { font-size: 3rem; }
+            .search-box { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ Weather Dashboard</h1>
+            <div class="search-box">
+                <input type="text" id="locationInput" placeholder="Search location (e.g., London, New York)">
+                <button onclick="searchLocation()">Search</button>
+                <button class="secondary" onclick="useCurrentLocation()">📍 Auto</button>
+            </div>
+            <div class="auto-update">
+                <span class="pulse"></span>
+                <span>Auto-updating every 30s</span>
+            </div>
+        </header>
+        
+        <div id="messageContainer"></div>
+        
+        <div id="weatherContainer" class="loading">
+            <div class="spinner"></div>
+            <p>Loading weather data...</p>
+        </div>
+    </div>
+    
+    <script>
+        let updateInterval = null;
+        let currentLocation = null;
+        
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            loadCachedLocation();
+        });
+        
+        // Clear cache when user leaves
+        window.addEventListener('beforeunload', () => {
+            fetch('/dashboard/location/clear', { method: 'DELETE' })
+                .catch(() => {});
+        });
+        
+        async function loadCachedLocation() {
+            try {
+                const response = await fetch('/dashboard/location/get');
+                const data = await response.json();
+                
+                if (data.cached) {
+                    currentLocation = {
+                        location: data.location,
+                        lat: data.lat,
+                        lon: data.lon
+                    };
+                    await loadWeather();
+                    startAutoUpdate();
+                } else {
+                    // Try to get browser location
+                    useCurrentLocation();
+                }
+            } catch (error) {
+                showMessage('Failed to load cached location', 'error');
+                useCurrentLocation();
+            }
+        }
+        
+        async function useCurrentLocation() {
+            if (!navigator.geolocation) {
+                showMessage('Geolocation not supported', 'error');
+                return;
+            }
+            
+            showMessage('Getting your location...', 'success');
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    currentLocation = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude,
+                        location: `${position.coords.latitude.toFixed(2)}, ${position.coords.longitude.toFixed(2)}`
+                    };
+                    
+                    await cacheLocation();
+                    await loadWeather();
+                    startAutoUpdate();
+                },
+                (error) => {
+                    showMessage('Unable to get location. Please search manually.', 'error');
+                }
+            );
+        }
+        
+        async function searchLocation() {
+            const location = document.getElementById('locationInput').value.trim();
+            if (!location) return;
+            
+            showMessage('Searching location...', 'success');
+            
+            try {
+                const response = await fetch(`/geocode/search?query=${encodeURIComponent(location)}`);
+                const data = await response.json();
+                
+                if (data && data.lat && data.lon) {
+                    currentLocation = {
+                        location: data.display_name || location,
+                        lat: data.lat,
+                        lon: data.lon
+                    };
+                    
+                    await cacheLocation();
+                    await loadWeather();
+                    startAutoUpdate();
+                } else {
+                    showMessage('Location not found', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to search location', 'error');
+            }
+        }
+        
+        async function cacheLocation() {
+            try {
+                await fetch('/dashboard/location/set', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentLocation)
+                });
+            } catch (error) {
+                console.error('Failed to cache location:', error);
+            }
+        }
+        
+        async function loadWeather() {
+            if (!currentLocation) return;
+            
+            const container = document.getElementById('weatherContainer');
+            container.innerHTML = '<div class="spinner"></div><p>Loading weather data...</p>';
+            
+            try {
+                const response = await fetch(
+                    `/dashboard/weather/current?lat=${currentLocation.lat}&lon=${currentLocation.lon}&location=${encodeURIComponent(currentLocation.location)}`
+                );
+                
+                if (!response.ok) throw new Error('Failed to fetch weather');
+                
+                const data = await response.json();
+                displayWeather(data);
+            } catch (error) {
+                container.innerHTML = '<div class="error">Failed to load weather data. Please try again.</div>';
+            }
+        }
+        
+        function displayWeather(data) {
+            const weather = data.weather;
+            const container = document.getElementById('weatherContainer');
+            
+            const html = `
+                <div class="weather-card">
+                    <div class="current-weather">
+                        <div class="temp-display">
+                            <div class="temp-value">${Math.round(weather.current?.temperature_2m || 0)}°</div>
+                            <div class="weather-desc">${getWeatherDescription(weather.current?.weather_code || 0)}</div>
+                        </div>
+                        
+                        <div>
+                            <div class="location-name">${data.location}</div>
+                            <div class="weather-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Feels Like</div>
+                                    <div class="detail-value">${Math.round(weather.current?.apparent_temperature || 0)}°</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Humidity</div>
+                                    <div class="detail-value">${weather.current?.relative_humidity_2m || 0}%</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Wind</div>
+                                    <div class="detail-value">${Math.round(weather.current?.wind_speed_10m || 0)} km/h</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Precipitation</div>
+                                    <div class="detail-value">${weather.current?.precipitation || 0} mm</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="last-updated">
+                        Last updated: ${new Date(data.timestamp).toLocaleTimeString()}
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function getWeatherDescription(code) {
+            const codes = {
+                0: '☀️ Clear',
+                1: '🌤️ Mainly Clear',
+                2: '⛅ Partly Cloudy',
+                3: '☁️ Overcast',
+                45: '🌫️ Foggy',
+                48: '🌫️ Foggy',
+                51: '🌦️ Light Drizzle',
+                53: '🌦️ Drizzle',
+                55: '🌦️ Heavy Drizzle',
+                61: '🌧️ Light Rain',
+                63: '🌧️ Rain',
+                65: '🌧️ Heavy Rain',
+                71: '🌨️ Light Snow',
+                73: '🌨️ Snow',
+                75: '🌨️ Heavy Snow',
+                77: '❄️ Snow Grains',
+                80: '🌦️ Light Showers',
+                81: '🌧️ Showers',
+                82: '⛈️ Heavy Showers',
+                85: '🌨️ Light Snow Showers',
+                86: '🌨️ Snow Showers',
+                95: '⛈️ Thunderstorm',
+                96: '⛈️ Thunderstorm with Hail',
+                99: '⛈️ Severe Thunderstorm'
+            };
+            return codes[code] || '🌡️ Unknown';
+        }
+        
+        function startAutoUpdate() {
+            if (updateInterval) clearInterval(updateInterval);
+            
+            updateInterval = setInterval(() => {
+                loadWeather();
+            }, 30000); // Update every 30 seconds
+        }
+        
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+        
+        // Handle Enter key in search
+        document.getElementById('locationInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchLocation();
+        });
+    </script>
+</body>
+</html>

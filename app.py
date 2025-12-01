@@ -298,6 +298,11 @@ logger.info("Weather Insights routes enabled (LEVEL 1)")
 
 # Include Phase 3 routers (LEVEL 2 Features - Always enabled)
 app.include_router(pollen_router)
+
+# Include Dashboard router
+from routes.dashboard import router as dashboard_router
+app.include_router(dashboard_router)
+logger.info("Dashboard routes enabled")
 logger.info("Pollen Forecast routes enabled (LEVEL 2)")
 
 app.include_router(marine_router)

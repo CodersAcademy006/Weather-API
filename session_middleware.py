@@ -112,6 +112,17 @@ class SessionMiddleware(BaseHTTPMiddleware):
         # Process the request
         response = await call_next(request)
         
+        # Clear location cache if this is a logout/session-end request
+        if request.url.path == "/auth/logout":
+            try:
+                from routes.dashboard import user_location_cache, cache_key
+                key = cache_key(session_id) if session_id else None
+                if key and key in user_location_cache:
+                    del user_location_cache[key]
+                    logger.debug(f"Cleared location cache for session: {session_id}")
+            except Exception as e:
+                logger.warning(f"Failed to clear location cache: {e}")
+        
         return response
     
     def create_session(self, user_id: str, response: Response) -> Session:
