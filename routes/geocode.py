@@ -64,7 +64,7 @@ async def search_locations(
     limit: int = Query(5, ge=1, le=20, description="Maximum results"),
     lang: str = Query(None, description="Language code (en, hi, ar, etc.)")
 ):
-    """Search for locations by name."""
+    """Search for locations by name with comprehensive error handling."""
     metrics = get_metrics()
     metrics.increment("total_requests")
     metrics.increment("geocode_search_requests")
@@ -72,10 +72,23 @@ async def search_locations(
     geocoding = get_geocoding_service()
     result = geocoding.search(q, limit, lang)
     
-    if result.get("source") == "error":
+    # Handle different error types with appropriate responses
+    if result.get("source") == "invalid_input":
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("error", "Invalid search query")
+        )
+    
+    if result.get("source") == "timeout":
+        raise HTTPException(
+            status_code=504,
+            detail="Geocoding service timed out. Please try again."
+        )
+    
+    if result.get("source") in ["error", "api_error"]:
         raise HTTPException(
             status_code=503,
-            detail="Geocoding service temporarily unavailable"
+            detail=result.get("error", "Geocoding service temporarily unavailable")
         )
     
     # Convert to response model

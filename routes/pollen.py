@@ -23,11 +23,43 @@ router = APIRouter(prefix="/api/v3/pollen", tags=["Pollen Forecast"])
 
 @router.get("/current")
 async def current_pollen_levels(
-    latitude: float,
-    longitude: float
+    latitude: float = Query(..., ge=-90, le=90, description="Latitude coordinate"),
+    longitude: float = Query(..., ge=-180, le=180, description="Longitude coordinate")
 ):
-    """Test endpoint"""
-    return {"test": "hello", "lat": latitude, "lon": longitude}
+    """
+    Get current pollen levels and allergy risk assessment.
+    
+    Returns:
+    - Current pollen levels for tree, grass, and weed
+    - Species breakdown (alder, birch, olive, grass, mugwort, ragweed)
+    - Allergy risk level (minimal, low, moderate, high, severe)
+    - Recommendations and precautions
+    - Suggested activities
+    
+    **Pollen Score Scale (0-100):**
+    - 0-10: None/Minimal risk
+    - 10-30: Low risk
+    - 30-60: Moderate risk
+    - 60-80: High risk
+    - 80-100: Severe risk
+    
+    **Use Cases:**
+    - Health & fitness apps
+    - Allergy tracking applications
+    - Outdoor activity planning
+    - Air purifier automation
+    """
+    
+    try:
+        # Fetch current pollen data
+        result = await get_current_pollen(latitude, longitude)
+        return result
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch pollen data: {str(e)}"
+        )
 
 
 @router.get("/forecast")

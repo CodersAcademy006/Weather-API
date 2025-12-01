@@ -104,14 +104,29 @@ async def get_dashboard_stats(
     total_cache_requests = cache_stats["hits"] + cache_stats["misses"]
     hit_rate = (cache_stats["hits"] / total_cache_requests * 100) if total_cache_requests > 0 else 0
     
-    # Get top searched locations (mock data for now)
-    top_locations = [
-        {"name": "New York", "lat": 40.71, "lon": -74.01, "searches": 150},
-        {"name": "London", "lat": 51.51, "lon": -0.13, "searches": 120},
-        {"name": "Tokyo", "lat": 35.68, "lon": 139.65, "searches": 95},
-        {"name": "Paris", "lat": 48.86, "lon": 2.35, "searches": 80},
-        {"name": "Mumbai", "lat": 19.08, "lon": 72.88, "searches": 75}
-    ]
+    # Get top searched locations from actual search history
+    try:
+        search_history = storage.get_all_search_history()
+        # Count searches per location (using lat/lon rounded to 2 decimals as key)
+        location_counts = {}
+        for entry in search_history:
+            key = (round(entry.latitude, 2), round(entry.longitude, 2))
+            if key in location_counts:
+                location_counts[key]["searches"] += 1
+            else:
+                location_counts[key] = {
+                    "name": entry.location_name,
+                    "lat": entry.latitude,
+                    "lon": entry.longitude,
+                    "searches": 1
+                }
+        # Get top 5
+        top_locations = sorted(location_counts.values(), key=lambda x: x["searches"], reverse=True)[:5]
+        if not top_locations:
+            top_locations = []  # Empty list if no search history
+    except Exception as e:
+        logger.error(f"Failed to get search history: {e}")
+        top_locations = []
     
     return DashboardStats(
         total_users=storage_stats["users_count"],

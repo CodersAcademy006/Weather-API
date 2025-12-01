@@ -74,6 +74,9 @@ class SessionMiddleware(BaseHTTPMiddleware):
         self.cookie_samesite = cookie_samesite or settings.SESSION_COOKIE_SAMESITE
         self.session_timeout = session_timeout or settings.SESSION_TIMEOUT_SECONDS
         
+        # Auto-register this instance globally
+        set_session_middleware(self)
+        
         logger.info(
             f"Session middleware initialized (cookie={self.cookie_name}, "
             f"secure={self.cookie_secure}, timeout={self.session_timeout}s)"

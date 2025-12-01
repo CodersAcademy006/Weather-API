@@ -1,8 +1,9 @@
 # IntelliWeather API - Complete Architecture
 
 **Version**: 3.0.0  
-**Last Updated**: November 30, 2025  
-**Phase**: 3 (LEVEL 1 Enterprise Features)
+**Last Updated**: December 1, 2025  
+**Phase**: 4 (LEVEL 2 Complete, LEVEL 3 In Progress)  
+**Status**: Production Ready
 
 ## System Architecture Diagram
 
@@ -34,9 +35,13 @@ graph TB
         AUTH[Auth Routes<br/>/auth/*]
         WEATHER_V1[Weather V1<br/>/weather, /hourly, /forecast]
         WEATHER_V2[Weather V2<br/>/weather/hourly, /weather/daily]
-        FORECAST_V3[Forecast V3 🆕<br/>/api/v3/forecast/*]
-        INSIGHTS[Weather Insights 🆕<br/>/api/v3/insights/*]
-        GEOCODE[Geocoding V2 🆕<br/>/geocode/*]
+        FORECAST_V3[Forecast V3 ✅<br/>/api/v3/forecast/*]
+        INSIGHTS[Weather Insights ✅<br/>/api/v3/insights/*]
+        POLLEN[Pollen Forecast ✅ L2<br/>/api/v3/pollen/*]
+        SOLAR[Solar & Energy ✅ L2<br/>/api/v3/solar/*]
+        AQI_V2[Air Quality V2 ✅ L2<br/>/api/v3/air-quality/*]
+        MARINE[Marine Weather ✅ L2<br/>/api/v3/marine/*]
+        GEOCODE[Geocoding V2 ✅<br/>/geocode/*]
         ALERTS[Alerts<br/>/alerts/*]
         DOWNLOADS[Downloads<br/>/downloads/*]
         APIKEYS[API Keys<br/>/api-keys/*]
@@ -50,13 +55,18 @@ graph TB
         STORAGE[Storage Service<br/>CSV-based Persistence]
         AUTH_SERVICE[Auth Service<br/>JWT + Bcrypt]
         METRICS_SERVICE[Metrics Service<br/>Counters & Timers]
-        INSIGHTS_ENGINE[🆕 Weather Insights Engine<br/>Proprietary Algorithms]
+        INSIGHTS_ENGINE[✅ Weather Insights Engine<br/>Proprietary Algorithms]
+        POLLEN_ENGINE[✅ Pollen Analysis Engine<br/>L2 Feature]
+        SOLAR_ENGINE[✅ Solar/PV Calculator<br/>L2 Feature]
+        AQI_ENGINE[✅ Air Quality Analyzer<br/>L2 Feature]
+        MARINE_ENGINE[✅ Marine Conditions Processor<br/>L2 Feature]
     end
 
     subgraph "External APIs"
         OPEN_METEO[Open-Meteo API<br/>Primary Weather Source]
+        OPEN_METEO_AQ[Open-Meteo Air Quality<br/>Pollen + AQI Data]
+        OPEN_METEO_MARINE[Open-Meteo Marine<br/>Ocean Conditions]
         WEATHER_API[WeatherAPI.com<br/>Fallback Source]
-        AIR_QUALITY[Open-Meteo AQI<br/>Air Quality Data]
     end
 
     subgraph "Data Storage"
@@ -1226,20 +1236,38 @@ sequenceDiagram
 - + Multi-language (i18n)
 - + API keys
 
-### Phase 3 (Enterprise) 🆕
+### Phase 3 (Enterprise - LEVEL 1) ✅
 - + **numpy, scipy** for scientific calculations
 - + Proprietary algorithm engine
 - + Multi-source hybrid forecasting
 - + Advanced caching strategies
 - + Sub-100ms autocomplete
 
-### Future (LEVEL 2-5)
+### Phase 4 (Enterprise - LEVEL 2) ✅ COMPLETE
+- + **Pollen Forecast API** - Allergy risk with tree/grass/weed breakdown
+- + **Solar & Energy API** - PV yield estimates and irradiance
+- + **Extended AQI V2** - 6 pollutants with health guidance
+- + **Marine Weather API** - Wave, tide, and ocean conditions
+- + Enhanced dashboard with tabbed interface
+- + Comprehensive health recommendations
+
+### Phase 5 (Enterprise - LEVEL 3) 🚧 IN PROGRESS
+- + **API Key Management System** with tiering
+- + **Rate Limiting Tiers** (Free/Pro/Business)
+- + **Developer Dashboard Portal** with analytics
+- + **Usage Metrics & Billing Foundation**
+- + **Enhanced OpenAPI Documentation**
+- + **API Key Authentication for all endpoints**
+
+### Future (LEVEL 4-6)
 - PostgreSQL for persistent storage
 - Redis for distributed caching
 - Kubernetes auto-scaling
 - ML bias correction
 - Real-time alerts
 - Developer SDKs
+- Weather maps & radar
+- Satellite imagery
 
 ---
 
@@ -1247,10 +1275,69 @@ sequenceDiagram
 
 IntelliWeather API v3.0.0 represents a **production-ready enterprise weather intelligence platform** with:
 
-✅ **13 new endpoints** across forecasting, insights, and geocoding  
-✅ **8 proprietary algorithms** for weather intelligence  
+✅ **25+ endpoints** across forecasting, insights, pollen, solar, AQI, marine, and geocoding  
+✅ **12+ proprietary algorithms** for weather intelligence  
 ✅ **Multi-source hybrid forecasting** for reliability  
 ✅ **Sub-200ms response times** across all endpoints  
+✅ **Level 2 Complete** - Pollen, Solar, AQI V2, Marine APIs deployed  
+🚧 **Level 3 In Progress** - API Key Management & Developer Portal
+
+**Next Phase:** Billing system, SDKs, and enhanced documentation for full SaaS readiness.
+
+---
+
+## Level 2 Features Summary (✅ COMPLETE)
+
+### 1. Pollen Forecast API
+- **Endpoints:** `/api/v3/pollen/current`, `/forecast`, `/trends`
+- **Data:** Tree (Alder, Birch, Olive), Grass, Weed (Mugwort, Ragweed)
+- **Features:** Allergy risk scoring, health recommendations, activity suggestions
+
+### 2. Solar & Energy Weather API
+- **Endpoints:** `/api/v3/solar/current`, `/forecast`, `/analysis`
+- **Data:** Sun position, GHI/DNI/DHI irradiance, PV yield estimates
+- **Features:** Solar potential scoring, efficiency factors, daylight info
+
+### 3. Extended Air Quality API (AQI V2)
+- **Endpoints:** `/api/v3/air-quality/current`, `/forecast`, `/pollutant/{name}`, `/health`
+- **Pollutants:** PM2.5, PM10, NO₂, O₃, SO₂, CO
+- **Features:** US EPA + European AQI, health impacts, exposure guidance
+
+### 4. Marine & Coastal Weather API
+- **Endpoints:** `/api/v3/marine/current`, `/forecast`, `/tides`, `/health`
+- **Data:** Wave height/period/direction, sea temperature, tides, currents
+- **Features:** Marine safety scoring, coastal conditions
+
+---
+
+## Level 3 Roadmap (🚧 IN PROGRESS)
+
+### API Key Management System
+- Multi-tier authentication (Free, Pro, Business)
+- Per-key rate limiting and quotas
+- API key generation and revocation
+- Usage tracking per key
+
+### Developer Dashboard Portal
+- Real-time usage analytics
+- Latency monitoring
+- Error rate tracking
+- API key management UI
+- Documentation access
+
+### Tiered Rate Limiting
+- **Free:** 60 requests/hour
+- **Pro:** 10,000 requests/day
+- **Business:** 100,000 requests/day + custom
+
+### Enhanced OpenAPI Docs
+- Interactive API explorer
+- Code examples in multiple languages
+- Authentication guides
+- Error catalog
+- Best practices
+
+---  
 ✅ **85%+ cache hit ratio** for optimal performance  
 ✅ **Complete API documentation** and deployment guides  
 

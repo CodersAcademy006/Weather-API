@@ -1,25 +1,20 @@
 """
-API Keys Routes
+API Keys Routes - Complete LEVEL 3 Implementation
 
-Provides endpoints for API key management.
+Provides endpoints for API key management with usage tracking.
 """
 
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Request, Depends, Header
+from pydantic import BaseModel, Field
 
 from config import settings
 from logging_config import get_logger
 from metrics import get_metrics
-from session_middleware import require_auth, get_session
+from session_middleware import require_auth
 from modules.api_keys import get_api_key_manager
-from schemas.api_keys import (
-    APIKeyCreate,
-    APIKeyResponse,
-    APIKeyCreated,
-    APIKeyList
-)
 
 logger = get_logger(__name__)
 
@@ -34,37 +29,65 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "",
-    response_model=APIKeyCreated,
-    summary="Create a new API key",
-    description="""
-    Create a new API key for accessing weather endpoints.
-    
-    **Important:** The full API key is only shown once upon creation.
-    Store it securely as it cannot be retrieved later.
-    
-    **Parameters:**
-    - `name`: Descriptive name for the key
-    - `rate_limit`: Custom rate limit (requests/min), optional
-    - `expires_in_days`: Key expiration in days, optional
-    """
-)
+# Schemas
+class APIKeyCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100, description="Descriptive name for the API key")
+    expires_in_days: Optional[int] = Field(None, ge=1, le=3650, description="Key expiration in days (optional)")
+
+
+class APIKeyResponse(BaseModel):
+    key_id: str
+    name: str
+    key_prefix: str
+    created_at: str
+    expires_at: Optional[str]
+    last_used_at: Optional[str]
+    is_active: bool
+    subscription_tier: str
+
+
+class APIKeyCreated(BaseModel):
+    key_id: str
+    name: str
+    api_key: str
+    created_at: str
+    expires_at: Optional[str]
+    subscription_tier: str
+    warning: str = "Store this key securely. It will not be shown again."
+
+
+class APIKeyUsageStats(BaseModel):
+    key_id: str
+    total_requests: int
+    successful: int
+    failed: int
+    success_rate: float
+    avg_latency_ms: float
+    period_days: int
+
+
+@router.post("", response_model=APIKeyCreated, summary="Create API Key")
 async def create_api_key(
     request: Request,
     key_data: APIKeyCreate,
     user = Depends(require_auth)
 ):
-    """Create a new API key."""
+    """Create a new API key for accessing weather endpoints."""
     metrics = get_metrics()
     metrics.increment("apikey_create_requests")
     
     manager = get_api_key_manager()
     
+    # Get user's subscription tier from storage
+    from storage import get_storage
+    storage = get_storage()
+    user_obj = storage.get_user_by_id(user.user_id)
+    subscription_tier = user_obj.subscription_tier if user_obj else "free"
+    
     api_key, raw_key = manager.create_key(
         user_id=user.user_id,
         name=key_data.name,
-        rate_limit=key_data.rate_limit,
+        subscription_tier=subscription_tier,
         expires_in_days=key_data.expires_in_days
     )
     
@@ -76,17 +99,11 @@ async def create_api_key(
         api_key=raw_key,
         created_at=api_key.created_at,
         expires_at=api_key.expires_at,
-        rate_limit=api_key.rate_limit,
-        warning="Store this key securely. It will not be shown again."
+        subscription_tier=api_key.subscription_tier
     )
 
 
-@router.get(
-    "",
-    response_model=APIKeyList,
-    summary="List your API keys",
-    description="Get a list of all API keys associated with your account."
-)
+@router.get("", response_model=List[APIKeyResponse], summary="List API Keys")
 async def list_api_keys(
     request: Request,
     user = Depends(require_auth)
@@ -98,7 +115,7 @@ async def list_api_keys(
     manager = get_api_key_manager()
     keys = manager.get_user_keys(user.user_id)
     
-    key_responses = [
+    return [
         APIKeyResponse(
             key_id=key.key_id,
             name=key.name,
@@ -106,24 +123,14 @@ async def list_api_keys(
             created_at=key.created_at,
             expires_at=key.expires_at,
             last_used_at=key.last_used_at,
-            rate_limit=key.rate_limit,
-            total_requests=key.total_requests,
-            is_active=key.is_active
+            is_active=key.is_active,
+            subscription_tier=key.subscription_tier
         )
         for key in keys
     ]
-    
-    return APIKeyList(
-        keys=key_responses,
-        count=len(key_responses)
-    )
 
 
-@router.delete(
-    "/{key_id}",
-    summary="Revoke an API key",
-    description="Revoke (deactivate) an API key. This action cannot be undone."
-)
+@router.delete("/{key_id}", summary="Revoke API Key")
 async def revoke_api_key(
     request: Request,
     key_id: str,
@@ -137,93 +144,34 @@ async def revoke_api_key(
     success = manager.revoke_key(key_id, user.user_id)
     
     if not success:
-        raise HTTPException(
-            status_code=404,
-            detail="API key not found or you don't have permission to revoke it"
-        )
+        raise HTTPException(status_code=404, detail="API key not found")
     
-    logger.info(f"Revoked API key {key_id}")
+    logger.info(f"Revoked API key {key_id} for user {user.user_id}")
     
     return {"message": "API key revoked successfully", "key_id": key_id}
 
 
-@router.get(
-    "/{key_id}",
-    response_model=APIKeyResponse,
-    summary="Get API key details",
-    description="Get details about a specific API key."
-)
-async def get_api_key(
+@router.get("/{key_id}/usage", response_model=APIKeyUsageStats, summary="Get API Key Usage Stats")
+async def get_key_usage(
     request: Request,
     key_id: str,
+    days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
     user = Depends(require_auth)
 ):
-    """Get details about an API key."""
+    """Get usage statistics for an API key."""
+    metrics = get_metrics()
+    metrics.increment("apikey_usage_requests")
+    
     manager = get_api_key_manager()
-    key = manager.get_key_by_id(key_id)
     
-    if not key or key.user_id != user.user_id:
-        raise HTTPException(
-            status_code=404,
-            detail="API key not found"
-        )
+    # Verify key belongs to user
+    keys = manager.get_user_keys(user.user_id)
+    if not any(k.key_id == key_id for k in keys):
+        raise HTTPException(status_code=404, detail="API key not found")
     
-    return APIKeyResponse(
-        key_id=key.key_id,
-        name=key.name,
-        key_prefix=key.key_prefix,
-        created_at=key.created_at,
-        expires_at=key.expires_at,
-        last_used_at=key.last_used_at,
-        rate_limit=key.rate_limit,
-        total_requests=key.total_requests,
-        is_active=key.is_active
+    stats = manager.get_usage_stats(key_id, days)
+    
+    return APIKeyUsageStats(
+        key_id=key_id,
+        **stats
     )
-
-
-# Dependency for API key authentication
-async def verify_api_key(
-    x_api_key: str = Header(None, alias="X-API-Key"),
-    apikey: str = Query(None)
-):
-    """
-    Verify API key from header or query parameter.
-    
-    Usage in routes:
-    ```python
-    @router.get("/protected")
-    async def protected_endpoint(api_key = Depends(verify_api_key)):
-        ...
-    ```
-    """
-    key = x_api_key or apikey
-    
-    if not key:
-        raise HTTPException(
-            status_code=401,
-            detail="API key required. Provide via X-API-Key header or apikey query parameter."
-        )
-    
-    manager = get_api_key_manager()
-    api_key = manager.validate_key(key)
-    
-    if not api_key:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired API key"
-        )
-    
-    # Check rate limit
-    allowed, remaining = manager.check_rate_limit(api_key)
-    
-    if not allowed:
-        raise HTTPException(
-            status_code=429,
-            detail="API key rate limit exceeded",
-            headers={"Retry-After": "60", "X-RateLimit-Remaining": "0"}
-        )
-    
-    # Record usage
-    manager.record_usage(api_key.key_id)
-    
-    return api_key

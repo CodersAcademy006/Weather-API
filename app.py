@@ -36,6 +36,7 @@ from cache import get_cache, generate_weather_cache_key, init_cache
 from storage import get_storage, init_storage, CachedWeather
 from session_middleware import SessionMiddleware, set_session_middleware, optional_auth
 from middleware.rate_limiter import RateLimiterMiddleware
+from middleware.api_key_auth import APIKeyAuthMiddleware
 from routes.auth import router as auth_router
 from metrics import router as metrics_router, get_metrics
 
@@ -48,6 +49,7 @@ from routes.apikeys import router as apikeys_router
 from routes.predict import router as predict_router
 from routes.admin import router as admin_router
 from routes.i18n import router as i18n_router
+from routes.subscription import router as subscription_router
 
 # Phase 3 routers (LEVEL 1 Features)
 from routes.forecast import router as forecast_router
@@ -231,10 +233,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add API key authentication middleware (before rate limiter)
+app.add_middleware(APIKeyAuthMiddleware)
+logger.info("API key authentication middleware registered")
+
 # Add rate limiter middleware
 app.add_middleware(RateLimiterMiddleware)
 
-# Session middleware will be added AFTER routes are registered
+# Add session middleware using proper FastAPI registration
+app.add_middleware(SessionMiddleware)
+logger.info("Session middleware registered")
 
 # Include Phase 1 routers
 app.include_router(auth_router)
@@ -301,13 +309,12 @@ logger.info("Solar & Energy Weather routes enabled (LEVEL 2)")
 app.include_router(air_quality_router)
 logger.info("Extended Air Quality (AQI V2) routes enabled (LEVEL 2)")
 
+# Include Phase 4 routers (LEVEL 3 Features - Subscription & Billing)
+app.include_router(subscription_router)
+logger.info("Subscription & Billing routes enabled (LEVEL 3)")
+
 app.include_router(test_new_router)
 logger.info("Test router enabled")
-
-# NOW add session middleware AFTER all routes are registered
-_session_middleware_inst = SessionMiddleware(app)
-set_session_middleware(_session_middleware_inst)
-logger.info("Session middleware registered after routes")
 
 
 # ==================== DATABASE CONNECTION (Legacy Support) ====================
@@ -377,7 +384,7 @@ def fetch_live_weather(lat: float, lon: float) -> Optional[dict]:
             "current": "temperature_2m,apparent_temperature,precipitation,weather_code,relative_humidity_2m,wind_speed_10m,uv_index,pressure_msl,is_day",
             "timezone": "auto"
         }
-        response = requests.get(api_url, params=params, timeout=10)
+        response = requests.get(api_url, params=params, timeout=20)
         if response.status_code == 200:
             raw = response.json()['current']
             return {
@@ -409,7 +416,7 @@ def fetch_live_weather(lat: float, lon: float) -> Optional[dict]:
                     "q": f"{lat},{lon}",
                     "aqi": "yes"
                 }
-                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=10)
+                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=15)
                 if response.status_code == 200:
                     data = response.json()
                     current = data.get("current", {})
@@ -485,7 +492,7 @@ def fetch_hourly_forecast(lat: float, lon: float) -> Optional[list]:
             "forecast_days": 1,
             "timezone": "auto"
         }
-        response = requests.get(api_url, params=params, timeout=10)
+        response = requests.get(api_url, params=params, timeout=20)
         if response.status_code == 200:
             raw = response.json()['hourly']
             return [
@@ -514,7 +521,7 @@ def fetch_hourly_forecast(lat: float, lon: float) -> Optional[list]:
                     "days": 1,
                     "aqi": "no"
                 }
-                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=10)
+                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=20)
                 if response.status_code == 200:
                     data = response.json()
                     forecast = data.get("forecast", {}).get("forecastday", [])
@@ -590,7 +597,7 @@ def fetch_daily_forecast(lat: float, lon: float) -> Optional[list]:
             "forecast_days": 7,
             "timezone": "auto"
         }
-        response = requests.get(api_url, params=params, timeout=10)
+        response = requests.get(api_url, params=params, timeout=20)
         if response.status_code == 200:
             raw = response.json()['daily']
             return [
@@ -621,7 +628,7 @@ def fetch_daily_forecast(lat: float, lon: float) -> Optional[list]:
                     "days": 7,
                     "aqi": "no"
                 }
-                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=10)
+                response = requests.get(settings.WEATHERAPI_URL, params=params, timeout=20)
                 if response.status_code == 200:
                     data = response.json()
                     forecast = data.get("forecast", {}).get("forecastday", [])
@@ -658,8 +665,8 @@ def fetch_aqi_and_alerts(lat: float, lon: float) -> dict:
         aqi_params = {"latitude": lat, "longitude": lon, "hourly": "us_aqi,pm2_5,carbon_monoxide,ozone", "timezone": "auto"}
         alerts_params = {"latitude": lat, "longitude": lon, "daily": "weather_code", "forecast_days": 1}
 
-        aqi_response = requests.get(air_quality_api_url, params=aqi_params, timeout=10)
-        alerts_response = requests.get(forecast_api_url, params=alerts_params, timeout=10)
+        aqi_response = requests.get(air_quality_api_url, params=aqi_params, timeout=20)
+        alerts_response = requests.get(forecast_api_url, params=alerts_params, timeout=20)
         
         aqi_data = aqi_response.json() if aqi_response.status_code == 200 else None
         alerts = alerts_response.json().get("daily", {}).get("alerts", []) if alerts_response.status_code == 200 else []

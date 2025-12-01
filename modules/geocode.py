@@ -32,8 +32,8 @@ class GeocodingService:
         """Initialize the geocoding service."""
         self._api_url = settings.GEOCODING_API_URL
         self._cache_ttl = settings.GEOCODE_CACHE_TTL_SECONDS
-        self._timeout = 10
-        logger.info("Geocoding service initialized")
+        self._timeout = 15  # Increased for better reliability
+        logger.info("Geocoding service initialized with 15s timeout")
     
     def _generate_cache_key(self, query_type: str, **params) -> str:
         """Generate a cache key for geocoding queries."""
@@ -88,6 +88,28 @@ class GeocodingService:
         Returns:
             Dict with results, query, count, and source
         """
+        # Input validation
+        query = query.strip()
+        if not query or len(query) < 2:
+            logger.warning(f"Invalid query (too short): '{query}'")
+            return {
+                "results": [],
+                "query": query,
+                "count": 0,
+                "source": "invalid_input",
+                "error": "Query must be at least 2 characters"
+            }
+        
+        if len(query) > 200:
+            logger.warning(f"Invalid query (too long): {len(query)} chars")
+            return {
+                "results": [],
+                "query": query[:200],
+                "count": 0,
+                "source": "invalid_input",
+                "error": "Query too long (max 200 characters)"
+            }
+        
         cache = get_cache()
         cache_key = self._generate_cache_key("search", q=query.lower(), limit=limit)
         
@@ -121,11 +143,22 @@ class GeocodingService:
                     "results": [],
                     "query": query,
                     "count": 0,
-                    "source": "error"
+                    "source": "api_error",
+                    "error": f"API returned status {response.status_code}"
                 }
             
             data = response.json()
             raw_results = data.get("results", [])
+            
+            if not raw_results:
+                logger.info(f"No results found for query: {query}")
+                return {
+                    "results": [],
+                    "query": query,
+                    "count": 0,
+                    "source": "live",
+                    "error": None
+                }
             
             # Normalize and dedupe
             normalized = [self._normalize_result(r) for r in raw_results]
@@ -134,7 +167,8 @@ class GeocodingService:
             result = {
                 "results": deduped,
                 "query": query,
-                "count": len(deduped)
+                "count": len(deduped),
+                "error": None
             }
             
             # Cache the result
@@ -148,7 +182,8 @@ class GeocodingService:
                 "results": [],
                 "query": query,
                 "count": 0,
-                "source": "timeout"
+                "source": "timeout",
+                "error": "Request timed out. Please try again."
             }
         except Exception as e:
             logger.error(f"Geocoding error: {e}")
@@ -156,7 +191,8 @@ class GeocodingService:
                 "results": [],
                 "query": query,
                 "count": 0,
-                "source": "error"
+                "source": "error",
+                "error": str(e)
             }
     
     def reverse(

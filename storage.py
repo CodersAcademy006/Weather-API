@@ -33,6 +33,7 @@ class User:
     hashed_password: str
     created_at: str
     is_active: bool = True
+    subscription_tier: str = "free"  # free, pro, business, enterprise
     
     @classmethod
     def create(cls, username: str, email: str, hashed_password: str) -> "User":
@@ -42,7 +43,8 @@ class User:
             username=username,
             email=email,
             hashed_password=hashed_password,
-            created_at=datetime.now(timezone.utc).isoformat()
+            created_at=datetime.now(timezone.utc).isoformat(),
+            subscription_tier="free"
         )
 
 
@@ -152,7 +154,7 @@ class CSVStorage:
     FILES = {
         "users": {
             "filename": "users.csv",
-            "headers": ["user_id", "username", "email", "hashed_password", "created_at", "is_active"]
+            "headers": ["user_id", "username", "email", "hashed_password", "created_at", "is_active", "subscription_tier"]
         },
         "sessions": {
             "filename": "sessions.csv",
@@ -502,6 +504,40 @@ class CSVStorage:
             "data_directory": self._data_dir,
             "is_writable": self.is_writable()
         }
+    
+    # ==================== SUBSCRIPTION TIER OPERATIONS ====================
+    
+    def update_user_subscription_tier(self, user_id: str, tier: str) -> bool:
+        """
+        Update a user's subscription tier.
+        
+        Args:
+            user_id: User ID
+            tier: New tier (free, pro, business, enterprise)
+            
+        Returns:
+            True if updated, False if user not found
+        """
+        rows = self._read_all("users")
+        updated = False
+        
+        for i, row in enumerate(rows):
+            if row["user_id"] == user_id:
+                rows[i]["subscription_tier"] = tier
+                updated = True
+                logger.info(f"Updated user {user_id} subscription tier to {tier}")
+                break
+        
+        if updated:
+            self._write_all("users", rows)
+        
+        return updated
+    
+    def update_api_key_last_used(self, key_id: str) -> bool:
+        """Update the last_used_at timestamp for an API key."""
+        # This would be implemented if we stored API keys in CSV
+        # For now, it's handled in modules/api_keys.py
+        pass
 
 
 # Global storage instance
