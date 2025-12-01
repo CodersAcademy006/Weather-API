@@ -1,7 +1,50 @@
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-requests==2.31.0
-psycopg2-binary==2.9.9
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
+# IntelliWeather API - Python Dependencies
+
+# Core Framework
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+gunicorn>=21.0.0
+
+# Configuration
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+email-validator>=2.0.0
+
+# HTTP Client
+requests>=2.31.0
+httpx>=0.24.0
+
+# Database (optional)
+psycopg2-binary>=2.9.0
+
+# Authentication
+passlib[bcrypt]>=1.7.0
+python-jose[cryptography]>=3.3.0
+
+# Caching (optional Redis backend)
+# redis>=4.5.0
+
+# Phase 2: Excel Reports
+openpyxl>=3.1.0
+
+# Phase 2: Charts (optional, for enhanced PDF reports)
+# matplotlib>=3.7.0
+# reportlab>=4.0.0
+
+# Phase 3: Scientific calculations for weather insights
+numpy>=1.24.0
+scipy>=1.10.0
+
+# Observability
+sentry-sdk>=1.0.0
+
+# Development & Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+
+# Linting (optional)
+# black>=23.0.0
+# flake8>=6.0.0
+# mypy>=1.0.0

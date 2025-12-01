@@ -3,88 +3,457 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - Weather App</title>
+    <title>Create Account - IntelliWeather</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #eef5ff; }
-        .auth-card { background: white; padding: 2rem 3rem; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); text-align: center; width: 90%; max-width: 400px; }
-        h1 { margin-top: 0; }
-        .form-group { margin-bottom: 1.5rem; text-align: left; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #555; }
-        input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background-color: #28a745; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; }
-        .google-btn { cursor: pointer; width: 100%; display: block; background-color: #4285F4; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; border: none; font-size: 16px; margin-top: 1rem; }
-        .link { margin-top: 1rem; }
-        .message { margin-top: 1rem; font-weight: bold; }
-        .success { color: green; }
-        .error { color: red; }
+        :root {
+            --royal-gold: #d4af37;
+            --royal-purple: #4a1c6e;
+            --royal-purple-light: #7b4397;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5rem 1rem 1rem;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Navigation */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            padding: 0.5rem 0;
+        }
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: white;
+            text-decoration: none;
+        }
+        .nav-icon {
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.4));
+        }
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .nav-link.active {
+            color: white;
+            background: rgba(212, 175, 55, 0.3);
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+
+        /* Background Elements */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .orb-1 { width: 500px; height: 500px; background: linear-gradient(135deg, var(--royal-gold), var(--royal-purple)); top: -150px; right: -150px; }
+        .orb-2 { width: 400px; height: 400px; background: linear-gradient(135deg, var(--royal-purple-light), #e94560); bottom: -100px; left: -100px; animation-delay: -10s; }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-30px, 30px); }
+        }
+
+        /* Auth Card */
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            z-index: 1;
+            animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes cardEntrance {
+            from { opacity: 0; transform: translateY(30px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .auth-card::before {
+            content: '✨';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3rem;
+            filter: drop-shadow(0 4px 8px rgba(212, 175, 55, 0.4));
+            animation: sparkle 2s ease-in-out infinite;
+        }
+        @keyframes sparkle {
+            0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+            50% { transform: translateX(-50%) scale(1.2); opacity: 0.8; }
+        }
+
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        .header p { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Features */
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0 1.5rem;
+        }
+        .feature-tag {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(123, 67, 151, 0.15));
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--royal-purple);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        /* Form */
+        .form-group { margin-bottom: 1.25rem; text-align: left; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            font-size: 1rem;
+            font-family: inherit;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 16px;
+            background: rgba(248, 250, 252, 0.9);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--royal-gold);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15);
+        }
+        .form-group input::placeholder { color: var(--text-muted); }
+        .form-group small { color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 0.4rem; }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            color: white;
+            background: linear-gradient(135deg, var(--success), #059669);
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            margin-bottom: 1.5rem;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+        }
+        .submit-btn:active { transform: translateY(0); }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(212, 175, 55, 0.3);
+        }
+        .divider span { padding: 0 1rem; }
+
+        /* Google Button */
+        .google-btn {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            font-family: inherit;
+            color: var(--text-primary);
+            background: white;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        .google-btn:hover {
+            border-color: var(--royal-gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+        .google-btn svg { width: 20px; height: 20px; }
+
+        /* Links */
+        .auth-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .auth-link a {
+            color: var(--royal-gold);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .auth-link a:hover { color: var(--royal-purple); }
+
+        /* Message */
+        .message {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.success { background: rgba(16, 185, 129, 0.1); color: #047857; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .message.error { background: rgba(239, 68, 68, 0.1); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        /* Footer */
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 1rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .footer-link {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .footer-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .footer-link.active {
+            color: white;
+            background: rgba(212, 175, 55, 0.3);
+            border-color: rgba(212, 175, 55, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .nav-container { padding: 0 1rem; }
+            .nav-brand { font-size: 1.1rem; }
+            .nav-links { gap: 0.5rem; }
+            .nav-link { padding: 0.5rem 0.8rem; font-size: 0.85rem; }
+            .footer-nav { flex-direction: column; gap: 0.25rem; }
+            .footer-link { display: block; width: fit-content; margin: 0 auto; }
+        }
+        @media (max-width: 480px) {
+            .auth-card { padding: 2rem 1.5rem; border-radius: 24px; }
+            .header h1 { font-size: 1.75rem; }
+        }
     </style>
 </head>
 <body>
+    <!-- Navigation Header -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">
+                <span class="nav-icon">👑</span>
+                <span class="nav-title">IntelliWeather</span>
+            </a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">🌦️ Dashboard</a>
+                <a href="/login.html" class="nav-link">🔐 Login</a>
+                <a href="/signup.html" class="nav-link active">✨ Sign Up</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
     <div class="auth-card">
-        <h1>Create Account</h1>
-        <form id="signupForm">
+        <div class="header">
+            <h1>Create Account</h1>
+            <p>Join the royal weather experience</p>
+        </div>
+
+        <div class="features">
+            <span class="feature-tag">🌡️ Real-time Data</span>
+            <span class="feature-tag">📍 Location-based</span>
+            <span class="feature-tag">📊 7-Day Forecast</span>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <form id="signup-form">
             <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" required>
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Choose a username" required minlength="3">
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="you@example.com" required>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" required>
+                <input type="password" id="password" placeholder="Create a strong password" required minlength="8">
+                <small>Min 8 characters with uppercase, lowercase, and number</small>
             </div>
-            <button type="submit">Sign Up</button>
+            <button type="submit" class="submit-btn">Create Account</button>
         </form>
-        <p style="text-align: center; margin: 1rem 0;">OR</p>
-        <button id="googleSignInBtn" class="google-btn">Sign up with Google</button>
 
-        <div id="message" class="message"></div>
-        <div class="link">
-            <p>Already have an account? <a href="./login.html">Log In</a></p>
-        </div>
+        <div class="divider"><span>or continue with</span></div>
+
+        <button class="google-btn" id="google-btn">
+            <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            Sign up with Google
+        </button>
+
+        <p class="auth-link">Already have an account? <a href="/login.html">Sign in</a></p>
     </div>
 
-    <script>
-        const signupForm = document.getElementById('signupForm');
-        const googleSignInBtn = document.getElementById('googleSignInBtn');
-        const messageDiv = document.getElementById('message');
+    <!-- Footer -->
+    <footer class="page-footer">
+        <div class="footer-nav">
+            <a href="/" class="footer-link">🌦️ Dashboard</a>
+            <a href="/login.html" class="footer-link">🔐 Login</a>
+            <a href="/signup.html" class="footer-link active">✨ Sign Up</a>
+            <a href="/docs" class="footer-link" target="_blank">📚 Docs</a>
+        </div>
+    </footer>
 
-        // Handler for standard email/password signup
-        signupForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
+    <script>
+        // Keep same-origin by default; allow override via window.INTELLIWEATHER_API_BASE
+        const API_BASE_URL = window.INTELLIWEATHER_API_BASE || window.location.origin;
+        console.log(`Signup page detected API Base URL: ${API_BASE_URL}`);
+
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type}`;
+            msg.style.display = 'block';
+        }
+
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
             try {
-                const response = await fetch('http://127.0.0.1:8000/signup', {
+                const response = await fetch(`${API_BASE_URL}/auth/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    credentials: 'include',
+                    body: JSON.stringify(data)
                 });
-                const data = await response.json();
-                if (response.ok) {
-                    messageDiv.textContent = 'Account created successfully! Redirecting to login...';
-                    messageDiv.className = 'message success';
-                    setTimeout(() => { window.location.href = './login.html'; }, 2000);
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    localStorage.setItem('weatherAppUser', JSON.stringify(result.user));
+                    showMessage('Account created! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = '/', 700);
                 } else {
-                    messageDiv.textContent = data.detail || 'An error occurred.';
-                    messageDiv.className = 'message error';     
+                    showMessage(result.detail || result.message || 'Registration failed', 'error');
                 }
             } catch (error) {
-                messageDiv.textContent = 'Could not connect to the server.';
-                messageDiv.className = 'message error';
+                showMessage('Connection error. Please try again.', 'error');
             }
         });
 
-        // Handler for Google Sign-In button
-        googleSignInBtn.addEventListener('click', () => {
+        document.getElementById('google-btn').addEventListener('click', () => {
             const GOOGLE_CLIENT_ID = "907619015371-uok8j31a979f7ii4t1094csjf7ij9qqk.apps.googleusercontent.com";
-            const REDIRECT_URI = "http://127.0.0.1:3000/weather-api/google-callback.html";
-            
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-                          `client_id=${GOOGLE_CLIENT_ID}` +
-                          `&redirect_uri=${REDIRECT_URI}` +
-                          `&response_type=code` +
-                          `&scope=openid%20email%20profile`;
-            
+            const REDIRECT_URI = `${window.location.origin}/google-callback.html`;
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=openid%20email%20profile`;
             window.location.href = authUrl;
         });
     </script>
