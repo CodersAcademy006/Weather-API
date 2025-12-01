@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weather API - Working?</title>
+    <style>
+        body { font-family: Arial; padding: 40px; background: #f0f0f0; }
+        .test { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Weather API Connection Test</h1>
+    
+    <div class="test">
+        <h2>Test 1: Check API Endpoint</h2>
+        <button onclick="testAPI()">Test /weather API</button>
+        <pre id="result1"></pre>
+    </div>
+
+    <div class="test">
+        <h2>Current URL</h2>
+        <p>You are viewing: <strong id="currentURL"></strong></p>
+        <p>Port: <strong id="currentPort"></strong></p>
+    </div>
+
+    <div class="test">
+        <h2>Instructions</h2>
+        <p class="error">⚠️ If you see "404" errors, you are NOT on port 8000!</p>
+        <ol>
+            <li>Go to VS Code's <strong>PORTS</strong> tab (next to Terminal)</li>
+            <li>Find port <strong>8000</strong></li>
+            <li>Click the <strong>Globe icon</strong> (🌐) next to port 8000</li>
+            <li>Do NOT use "Open with Live Server"</li>
+        </ol>
+    </div>
+
+    <script>
+        document.getElementById('currentURL').textContent = window.location.href;
+        document.getElementById('currentPort').textContent = window.location.port || '(default)';
+
+        async function testAPI() {
+            const result = document.getElementById('result1');
+            result.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch('/weather?lat=40.7128&lon=-74.0060');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.className = 'success';
+                    result.textContent = '✅ SUCCESS! API is working!\n\n' + JSON.stringify(data, null, 2);
+                } else {
+                    result.className = 'error';
+                    result.textContent = '❌ API returned error: ' + response.status + '\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                result.className = 'error';
+                result.textContent = '❌ FAILED TO CONNECT!\n\nError: ' + error.message + '\n\nYou are probably on the WRONG PORT.\nPlease open port 8000 from the Ports tab!';
+            }
+        }
+
+        // Auto-test on load
+        setTimeout(testAPI, 500);
+    </script>
+</body>
+</html>
